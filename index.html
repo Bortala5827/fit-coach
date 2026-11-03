@@ -1086,7 +1086,7 @@
       rcPlan: "Today's plan", rcEdit: "Edit", rcTotal: "Total",
       rcMeta: "{date} · {m} min · {lv} · {n} moves", rcSum: "{n} moves · {t}",
       rcScan: "Scan to load this circuit",
-      aboutVer: "Voice-guided workouts · v1.10",
+      aboutVer: "Voice-guided workouts · v1.11",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
@@ -1195,7 +1195,7 @@
       rcPlan: "今日菜單", rcEdit: "調整", rcTotal: "合計",
       rcMeta: "{date} · {m} 分鐘 · {lv} · {n} 項", rcSum: "{n} 項 · {t}",
       rcScan: "掃碼載入這套編排",
-      aboutVer: "語音帶練運動 · v1.10",
+      aboutVer: "語音帶練運動 · v1.11",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
@@ -1465,6 +1465,79 @@
       if (busy) { setTimeout(fire, 60); } else { fire(); }
     } catch (e2) {}
   }
+
+  /* ---------- cloned-voice TTS layer (ElevenLabs via /api/tts) ----------
+     Every spoken cue tries the cloned voice first; on any failure (Worker not
+     deployed, offline, API error) it falls back to the built-in Web Speech
+     voice, so this can never regress the current experience. Successful audio
+     is cached in CacheStorage, so after the first session each phrase is instant
+     and works offline. A startup probe auto-enables TTS the moment the Worker
+     goes live — no code change needed later. */
+  var TTS_BASE = "/api/tts";
+  var ttsEnabled = false, ttsTried = false;
+  var voiceAudio = new Audio();
+  voiceAudio.preload = "none";
+  voiceAudio.setAttribute("playsinline", "");
+  function ttsUrl(text, lang, tone) {
+    return TTS_BASE + "?t=" + encodeURIComponent(text) + "&l=" +
+      encodeURIComponent(lang || LANG) + "&tone=" + encodeURIComponent(tone || "cue");
+  }
+  function playVoiceAudio(url, text, tone) {
+    try {
+      fetch(url).then(function (r) {
+        if (!r.ok || (r.headers.get("content-type") || "").indexOf("audio") !== 0) { speak(text, tone); return; }
+        r.arrayBuffer().then(function (buf) {
+          try {
+            if (window.caches) {
+              caches.open("fit-voice-v1").then(function (c) {
+                c.put(url, new Response(buf, { headers: { "content-type": "audio/mpeg" } }));
+              });
+            }
+            var obj = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
+            voiceAudio.pause();
+            voiceAudio.src = obj;
+            voiceAudio.onended = function () { try { URL.revokeObjectURL(obj); } catch (e) {} };
+            var p = voiceAudio.play();
+            if (p && p.catch) { p.catch(function () { speak(text, tone); }); }
+          } catch (e2) { speak(text, tone); }
+        }).catch(function () { speak(text, tone); });
+      }).catch(function () { speak(text, tone); });
+    } catch (e) { speak(text, tone); }
+  }
+  /* public: speak a cue via cloned voice, fall back to Web Speech */
+  function sayCue(text, lang, tone) {
+    if (!voiceOn || !text) { return; }
+    if (!ttsEnabled) { speak(text, tone); return; }
+    playVoiceAudio(ttsUrl(text, lang, tone), text, tone);
+  }
+  /* prefetch the next phrase into cache to hide network latency */
+  function prefetchCue(text, lang, tone) {
+    if (!ttsEnabled || !text) { return; }
+    try {
+      if (!window.caches) { return; }
+      var url = ttsUrl(text, lang, tone);
+      caches.open("fit-voice-v1").then(function (c) {
+        c.match(url).then(function (hit) {
+          if (hit) { return; }
+          fetch(url).then(function (r) {
+            if (r.ok && (r.headers.get("content-type") || "").indexOf("audio") === 0) { c.put(url, r.clone()); }
+          }).catch(function () {});
+        });
+      });
+    } catch (e) {}
+  }
+  /* startup probe: enable TTS only if the Worker answers with audio */
+  function probeTTS() {
+    if (ttsTried) { return; }
+    ttsTried = true;
+    try {
+      if (!window.caches) { return; }
+      fetch(ttsUrl("Hi", "en", "cue")).then(function (r) {
+        if (r.ok && (r.headers.get("content-type") || "").indexOf("audio") === 0) { ttsEnabled = true; }
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function vibrate(ms) {
     try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
   }
@@ -1578,9 +1651,9 @@
         try { speechSynthesis.cancel(); } catch (e) {}
         var st = steps[idx];
         if (!st) {
-          speak(cueBrief ? T("getReady") + cueJoin() + cueBrief : T("getReady"), "go");
+          sayCue(cueBrief ? T("getReady") + cueJoin() + cueBrief : T("getReady"), LANG, "go");
         } else {
-          speak(st.say + (st.tip && st.tipTag === "note" && st.secs >= 8 ? cueJoin() + st.tip : ""), "cue");
+          sayCue(st.say + (st.tip && st.tipTag === "note" && st.secs >= 8 ? cueJoin() + st.tip : ""), LANG, "cue");
         }
       }
     }
@@ -2374,7 +2447,12 @@
     var say = st.say;
     /* rest is long enough -> speak the note without stepping on the countdown */
     if (st.tip && st.tipTag === "note" && st.secs >= 8) { say = say + cueJoin() + st.tip; }
-    speak(say, st.isIntro ? "go" : (st.cls === "idle" ? "calm" : "cue"));
+    var tone = st.isIntro ? "go" : (st.cls === "idle" ? "calm" : "cue");
+    sayCue(say, LANG, tone);
+    if (steps[i + 1]) {
+      var nx = steps[i + 1];
+      prefetchCue(nx.say, LANG, nx.isIntro ? "go" : (nx.cls === "idle" ? "calm" : "cue"));
+    }
     vibrate(st.cls === "contract" ? 60 : 30);
     remaining = st.secs;
     deadline = Date.now() + st.secs * 1000;
@@ -2398,7 +2476,7 @@
       var st = steps[idx];
       if (st) {
         if (whole >= 1 && whole <= 3 && st.secs >= 5) { beep(whole === 1); }
-        if (whole === 10 && st.secs >= 30 && !warned) { warned = true; speak(T("tenSecs"), "go"); }
+        if (whole === 10 && st.secs >= 30 && !warned) { warned = true; sayCue(T("tenSecs"), LANG, "go"); }
         /* mid-set interjections, timed inside the first (secs - 12) seconds */
         if (st.mid && midI < st.mid.length && remaining > 3) {
           var elapsed = st.secs - remaining;
@@ -2407,7 +2485,7 @@
             : Math.max(6, st.secs - 12) * (midI === 0 ? 0.35 : 0.82);
           if (elapsed >= at) {
             var line = st.mid[midI++];
-            speak(line, st.cls === "idle" ? "calm" : "note");
+            sayCue(line, LANG, st.cls === "idle" ? "calm" : "note");
             if (st.cls !== "idle") { showCue("noteTag", line); }
           }
         }
@@ -2456,7 +2534,7 @@
        Skip jumps straight to the first work cue, so it never slows down a repeat user. */
     cueBrief = briefOf(current.id);
     showCue("formTag", cueBrief);
-    speak(T("getReady") + cueJoin() + cueBrief, "go");
+    sayCue(T("getReady") + cueJoin() + cueBrief, LANG, "go");
     look("idle", T("ready"));
     countEl.textContent = "";
     demoEl.className = "demo";
@@ -2560,7 +2638,7 @@
     quip.textContent = T(qk);
     void quip.offsetWidth;
     quip.classList.add("show");
-    speak(T("greatJob") + " " + T(qk + "s"), "cheer");
+    sayCue(T("greatJob") + " " + T(qk + "s"), LANG, "cheer");
     confetti();
     vibrate([80, 60, 80]);
   }
@@ -2948,6 +3026,7 @@
   renderGuide();
   route();
   loadMixFromUrl();
+  probeTTS();
 })();
 </script>
 </body>

@@ -34,6 +34,7 @@ Every workout has three intensity levels (Light / Standard / Hard). Rest screens
 - **Install anywhere** — Android/desktop get a real install prompt; iOS Safari shows the Share → Add to Home Screen gesture instead of a dead button.
 - **Accessible** — respects `prefers-reduced-motion` (no confetti or bounce), localized aria labels on the tab bar.
 - **English / 繁體中文** — the coach speaks both, preferring natural system voices (Samantha-class for English, Taiwan Mandarin for Chinese), with a 🎵 shortcut to the voice studio.
+- **Cloned voice (optional, zero-regression)** — when a `fit-tts` Worker is deployed, every spoken cue (form cues, notes, countdown, finish) is rendered in a cloned voice instead of the system voice, then cached in the browser so it's instant and works offline after first use. Web Speech stays as automatic fallback, so the app never breaks if the Worker is absent or offline. See the `fit-tts` repo for the clone + deploy steps.
 - **Zero backend** — one HTML file. Works offline once loaded. All progress lives in `localStorage`.
 - **Private by default** — no account, no analytics on your behavior, no data collection.
 - **Deep links** — `/kegel`, `/boxing`, `/7min`, `/tabata`, `/guide`, `/records` … plus `/?mix=<code>` to load a shared circuit.
