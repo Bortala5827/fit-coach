@@ -16,7 +16,8 @@
 <meta name="twitter:card" content="summary">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { overscroll-behavior: none; }
+  html, body { overscroll-behavior-x: none; }   /* Y stays auto: pull-to-refresh works */
+  body.running { overscroll-behavior-y: none; } /* no accidental refresh mid-workout */
   body {
     background: #f6f1e7;
     color: #423a31;
@@ -286,14 +287,6 @@
   .more-panel.show { display: block; }
   .more-panel .level-row { margin: 0 0 14px; }
   .more-panel .btn-ghost { width: 100%; }
-  .music-row { margin-top: 10px; }
-  .music-row .btn-ghost.on { color: #c9805e; border-color: #c9805e; }
-  .music-line { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .music-name { flex: 1; min-width: 0; font-size: 12px; color: #8a7f70; text-align: center;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mini { flex: none; width: 30px; height: 30px; padding: 0; border-radius: 50%;
-    border: 1px solid #e8dfd0; background: #fff; color: #c9805e;
-    font-size: 18px; line-height: 1; cursor: pointer; }
 
   /* stats & about screens */
   .scr-title { font-size: 20px; font-weight: 700; letter-spacing: 2px; margin-top: 8px; }
@@ -358,12 +351,17 @@
   .tabbar.hide { display: none !important; }
 
   /* screen header with one inline action */
-  .scr-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
-  .scr-head .scr-title { margin-top: 0; }
+  .scr-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+  .scr-head .scr-title { margin-top: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .scr-act {
+    flex: none; white-space: nowrap;
     padding: 8px 14px; min-height: 36px; font-size: 12px; font-weight: 700;
     background: transparent; color: #8a7f70; border: 1px solid #e8dfd0;
   }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .sec-head h3 { margin-bottom: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sec-act { flex: none; white-space: nowrap; padding: 6px 11px; min-height: 30px;
+    font-size: 11px; font-weight: 700; background: transparent; color: #8a7f70; border: 1px solid #e8dfd0; }
   .scr-act.danger { color: #b8674f; border-color: #e3c3b5; }
   .scr-note { margin-top: 8px; font-size: 12px; color: #8a7f70; line-height: 1.6; text-align: left; }
 
@@ -387,29 +385,72 @@
   .g-move { font-size: 12px; color: #6f6558; padding: 6px 0; border-top: 1px solid #f0e7d9; line-height: 1.55; }
   .g-move b { color: #c9805e; margin-right: 8px; }
 
-  /* records */
-  .stat-grid.cols2 { grid-template-columns: repeat(2, 1fr); }
-  .stat-card.mini { padding: 14px 16px; }
+  /* records — fluid layout: no hardcoded widths, no CJK wrap jitter */
+  .stat-grid.cols2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-card.mini { padding: 14px 16px; min-width: 0; }
   .stat-card.mini .stat-big { font-size: 26px; }
-  .rec-sec { margin-top: 22px; text-align: left; }
-  .rec-sec h3 { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #8a7f70; margin-bottom: 10px; }
-  .dist-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 12px; }
-  .dist-name { width: 92px; flex: none; color: #6f6558; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dist-track { flex: 1; height: 8px; background: #eee5d7; border-radius: 99px; overflow: hidden; }
+  .stat-card.mini .stat-label {
+    font-size: 11px; line-height: 1.35; min-height: 2.7em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .rec-sec { margin-top: 22px; text-align: left; min-width: 0; }
+  .rec-sec h3 { font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #8a7f70; margin-bottom: 10px; }
+  .dist-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; font-size: 12px; min-width: 0; }
+  .dist-name { flex: 0 1 40%; min-width: 0; color: #6f6558; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dist-track { flex: 1 1 auto; min-width: 20px; height: 8px; background: #eee5d7; border-radius: 99px; overflow: hidden; }
   .dist-fill { height: 100%; background: #c9805e; border-radius: 99px; }
-  .dist-val { flex: none; width: 90px; text-align: right; color: #8a7f70; font-variant-numeric: tabular-nums; }
+  .dist-val { flex: none; min-width: 64px; text-align: right; color: #8a7f70; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .log-list { display: flex; flex-direction: column; gap: 8px; }
-  .log-row { display: flex; align-items: center; gap: 10px; background: #fffaf2; border: 1px solid #e8dfd0; border-radius: 14px; padding: 11px 13px; text-align: left; }
-  .log-main { flex: 1; min-width: 0; }
+  .log-row { display: flex; align-items: center; gap: 8px; background: #fffaf2; border: 1px solid #e8dfd0; border-radius: 14px; padding: 11px 13px; text-align: left; min-width: 0; }
+  .log-main { flex: 1 1 auto; min-width: 0; }
   .log-name { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .log-meta { font-size: 11px; color: #8a7f70; margin-top: 3px; }
-  .log-time { flex: none; font-size: 14px; font-weight: 700; color: #c9805e; font-variant-numeric: tabular-nums; }
-  .log-flag { flex: none; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 99px; background: #eef2e8; color: #6f8a5f; }
+  .log-meta { font-size: 11px; color: #8a7f70; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-time { flex: none; font-size: 14px; font-weight: 700; color: #c9805e; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .log-flag { flex: none; font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 99px; background: #eef2e8; color: #6f8a5f; white-space: nowrap; }
   .log-flag.early { background: #f6e9df; color: #b8674f; }
   .empty { font-size: 13px; color: #8a7f70; padding: 18px; text-align: center; background: #fffaf2; border: 1px dashed #e8dfd0; border-radius: 16px; }
   .about-card.compact { margin-top: 26px; padding: 18px; gap: 4px; }
   .about-card.compact .about-logo { width: 44px; height: 44px; }
   .about-card.compact .tip { margin-top: 10px; }
+
+  /* daily mix: collapsible planner card on the home screen */
+  .mix-card { background: #fff6e9; border: 1px solid #e9d6b8; border-radius: 20px;
+    padding: 15px 18px; margin-top: 22px; text-align: left; }
+  .mix-head { width: 100%; display: flex; align-items: center; gap: 14px;
+    background: none; border: none; border-radius: 0; padding: 0; min-height: 0;
+    color: inherit; cursor: pointer; text-align: left; }
+  .mix-head:active { transform: none; }
+  .mix-ico { flex: none; width: 40px; height: 40px; display: flex; align-items: center;
+    justify-content: center; font-size: 21px; background: #fff;
+    border: 1px solid #e9d6b8; border-radius: 13px; }
+  .mix-txt { flex: 1; min-width: 0; }
+  .mix-name { display: block; font-size: 15px; font-weight: 700; }
+  .mix-desc { display: block; font-size: 11px; color: #8a7f70; margin-top: 3px; line-height: 1.45; }
+  .mix-arrow { flex: none; font-size: 15px; font-weight: 700; color: #c9805e; }
+  .mix-body { display: none; margin-top: 15px; }
+  .mix-card.open .mix-body { display: block; }
+  .mix-row { display: flex; gap: 7px; margin-bottom: 12px; }
+  .mix-opt { flex: 1; min-width: 0; padding: 9px 4px; min-height: 38px; font-size: 12px;
+    font-weight: 700; background: #fff; color: #8a7f70; border: 1px solid #e8dfd0; }
+  .mix-opt.on { color: #c9805e; border-color: #c9805e; }
+  .mix-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+    color: #8a7f70; margin: 0 0 7px; }
+  .mix-plan { font-size: 12px; line-height: 1.75; color: #6f6558; background: #fff;
+    border: 1px dashed #e9d6b8; border-radius: 12px; padding: 11px 13px; margin-bottom: 12px;
+    max-height: 108px; overflow-y: auto; }
+  .mix-plan b { color: #c9805e; margin-right: 6px; }
+  .mix-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mix-actions button { flex: 1; min-width: 92px; padding: 10px 8px; min-height: 40px;
+    font-size: 12px; font-weight: 700; background: transparent; color: #8a7f70;
+    border: 1px solid #e8dfd0; }
+  .mix-actions button.primary { background: #c9805e; color: #fff; border-color: #c9805e; }
+  .mix-share { display: none; margin-top: 13px; padding-top: 13px;
+    border-top: 1px solid #e9d6b8; text-align: center; }
+  .mix-share.show { display: block; }
+  .mix-qr { width: 168px; height: 168px; background: #fff; border: 1px solid #e9d6b8;
+    border-radius: 12px; padding: 6px; }
+  .mix-url { font-size: 10px; color: #8a7f70; word-break: break-all; line-height: 1.5; margin: 9px 0; }
+  .mix-hint { font-size: 11px; color: #8a7f70; line-height: 1.55; }
 
   /* short screens (iPhone SE class): compress vertical rhythm */
   @media (max-height: 680px) {
@@ -441,6 +482,44 @@
     <button id="langBtn" class="lang-btn">EN</button>
     <h1>Fit Coach</h1>
     <p class="sub" data-i18n="tagline">Voice-guided workouts. Just press go.</p>
+    <!-- Daily Mix: science-based random bodyweight circuit, planner + share -->
+    <div class="mix-card" id="mixCard">
+      <button class="mix-head" id="mixHead">
+        <span class="mix-ico">🎲</span>
+        <span class="mix-txt">
+          <span class="mix-name" data-i18n="mixName">Daily Mix</span>
+          <span class="mix-desc" data-i18n="mixDesc">Science-based random circuit · bodyweight only</span>
+        </span>
+        <span class="mix-arrow" id="mixArrow">+</span>
+      </button>
+      <div class="mix-body" id="mixBody">
+        <div class="mix-label" data-i18n="mixDur">Duration</div>
+        <div class="mix-row" id="mixDurRow">
+          <button class="mix-opt" data-d="0">10 min</button>
+          <button class="mix-opt on" data-d="1">15 min</button>
+          <button class="mix-opt" data-d="2">20 min</button>
+        </div>
+        <div class="mix-label" data-i18n="mixLevel">Intensity</div>
+        <div class="mix-row" id="mixLvRow">
+          <button class="mix-opt" data-l="0" data-i18n="level0">Light</button>
+          <button class="mix-opt on" data-l="1" data-i18n="level1">Standard</button>
+          <button class="mix-opt" data-l="2" data-i18n="level2">Hard</button>
+        </div>
+        <div class="mix-label" data-i18n="mixPlan">Today's circuit</div>
+        <div class="mix-plan" id="mixPlan"></div>
+        <div class="mix-actions">
+          <button class="primary" id="mixStart" data-i18n="mixStart">Start</button>
+          <button id="mixShuffle" data-i18n="mixShuffle">Shuffle</button>
+          <button id="mixShare" data-i18n="mixShare">Share / QR</button>
+        </div>
+        <div class="mix-share" id="mixShareBox">
+          <img class="mix-qr" id="mixQr" alt="QR code">
+          <div class="mix-url" id="mixUrl"></div>
+          <div class="mix-actions"><button id="mixCopy" data-i18n="mixCopy">Copy link</button></div>
+          <p class="mix-hint" data-i18n="mixHint">Offline? Share the text code instead.</p>
+        </div>
+      </div>
+    </div>
     <div class="list" id="list"></div>
     <div class="history desk-only">
       <div class="streak" id="streak"></div>
@@ -749,14 +828,6 @@
         <button class="lvl" data-lv="2" data-i18n="level2">Hard</button>
       </div>
       <button id="voiceBtn" class="btn-ghost">Voice: on</button>
-      <div class="music-row" id="musicRow">
-        <button id="musicBtn" class="btn-ghost">Music: off</button>
-        <div class="music-line">
-          <button id="musicPrev" class="mini" aria-label="Previous">&#8249;</button>
-          <div class="music-name" id="musicName"></div>
-          <button id="musicNext" class="mini" aria-label="Next">&#8250;</button>
-        </div>
-      </div>
     </div>
     <div class="setup" id="setupPanel">
       <label><span data-i18n="cfgWork">Work</span> <input id="cfgWork" type="number" min="5" max="300" value="20">s</label>
@@ -807,13 +878,16 @@
       <div id="recDist"></div>
     </div>
     <div class="rec-sec">
-      <h3 data-i18n="recLog">Sessions</h3>
+      <div class="sec-head">
+        <h3 data-i18n="recLog">Sessions</h3>
+        <button id="exportBtn" class="sec-act" data-i18n="recExport">Export</button>
+      </div>
       <div class="log-list" id="recLog"></div>
     </div>
     <div class="about-card compact">
       <img class="about-logo" src="/logo.svg" alt="Fit Coach">
       <div class="about-name">Fit Coach</div>
-      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.7</div>
+      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.8</div>
       <p class="tip"><span data-i18n="privacy1">No account. No tracking.</span><br><span data-i18n="privacy2">Your data stays on your device.</span></p>
       <p class="tip" data-i18n="disclaimer">General fitness guidance only. Not medical advice. Stop if you feel pain.</p>
       <button class="btn-ghost install-btn js-install" data-i18n="install">Install app</button>
@@ -860,8 +934,6 @@
       voiceOn: "Voice: on", voiceOff: "Voice: off",
       back: "Back", ready: "Ready", done: "Done", rest: "Rest",
       options: "Options", formTag: "FORM", noteTag: "NOTE",
-      musicOn: "Music: on", musicOff: "Music: off",
-      musicNone: "No playlist (offline)", musicLoading: "Loading playlist…",
       level0: "Light", level1: "Standard", level2: "Hard",
       cuesInfo: "{name} · {n} cues",
       finishSummary: "{name} · {n} cues · about {m} min · {d}",
@@ -918,7 +990,15 @@
       recEmpty: "No sessions yet. Go train.", recDone: "Done", recEarly: "Early",
       recCues: "{n}/{m} cues", recNoTime: "—",
       streakLabel: "Streak: {d} days",
-      aboutVer: "Voice-guided workouts · v1.7",
+      mixName: "Daily Mix", mixDesc: "Science-based random circuit · bodyweight only",
+      mixDur: "Duration", mixLevel: "Intensity", mixMin: "min", mixPlan: "Today's circuit",
+      mixStart: "Start", mixShuffle: "Shuffle", mixShare: "Share / QR",
+      mixCopy: "Copy link", mixCopied: "Copied", mixShareTitle: "Scan to load this circuit",
+      mixHint: "Offline? Share the text code instead.", mixBad: "Invalid code",
+      mixIntro: "{n} moves, about {m} minutes. Follow the coach.",
+      mixBrief: "Alternate lower body, upper body and core. Keep a steady pace, keep breathing, stop if you feel pain.",
+      recExport: "Export", recExportEmpty: "Nothing to export yet", recExportDone: "Saved",
+      aboutVer: "Voice-guided workouts · v1.8",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
@@ -954,8 +1034,6 @@
       voiceOn: "音声: オン", voiceOff: "音声: オフ",
       back: "戻る", ready: "準備", done: "完了", rest: "休憩",
       options: "設定", formTag: "フォーム", noteTag: "注意",
-      musicOn: "音楽: オン", musicOff: "音楽: オフ",
-      musicNone: "プレイリストなし（オフライン）", musicLoading: "読み込み中…",
       level0: "ライト", level1: "標準", level2: "ハード",
       cuesInfo: "{name} · {n} ステップ",
       finishSummary: "{name} · {n} ステップ · 約 {m} 分 · {d}",
@@ -1012,7 +1090,15 @@
       recEmpty: "まだ記録がありません。練習しましょう。", recDone: "完了", recEarly: "途中終了",
       recCues: "{n}/{m} ステップ", recNoTime: "—",
       streakLabel: "連続 {d} 日",
-      aboutVer: "音声ガイド付きトレーニング · v1.7",
+      mixName: "デイリーミックス", mixDesc: "科学的なランダムサーキット · 自重のみ",
+      mixDur: "時間", mixLevel: "強度", mixMin: "分", mixPlan: "今日のメニュー",
+      mixStart: "開始", mixShuffle: "組み替え", mixShare: "共有 / QR",
+      mixCopy: "リンクをコピー", mixCopied: "コピーしました", mixShareTitle: "QRを読み込んでこのメニューを再現",
+      mixHint: "オフラインならテキストコードを共有してください", mixBad: "無効なコード",
+      mixIntro: "{n}種目、約{m}分。音声ガイドに従ってください。",
+      mixBrief: "下半身・上半身・体幹を交互に。一定のペースで、呼吸を止めず、痛みがあれば中止してください。",
+      recExport: "書き出し", recExportEmpty: "書き出す記録がありません", recExportDone: "保存しました",
+      aboutVer: "音声ガイド付きトレーニング · v1.8",
       privacy1: "アカウント不要。トラッキングなし。",
       privacy2: "データは端末から出ません。",
       disclaimer: "一般的なフィットネス案内です。医療アドバイスではありません。痛みを感じたら中止してください。",
@@ -1048,8 +1134,6 @@
       voiceOn: "語音：開", voiceOff: "語音：關",
       back: "返回", ready: "預備", done: "完成", rest: "休息",
       options: "選項", formTag: "動作要領", noteTag: "注意",
-      musicOn: "音樂：開", musicOff: "音樂：關",
-      musicNone: "沒有歌單（離線）", musicLoading: "載入歌單中…",
       level0: "輕鬆", level1: "標準", level2: "加強",
       cuesInfo: "{name} · {n} 個口令",
       finishSummary: "{name} · {n} 個口令 · 約 {m} 分鐘 · {d}",
@@ -1106,7 +1190,15 @@
       recEmpty: "還沒有記錄，去練一組吧。", recDone: "完成", recEarly: "提前結束",
       recCues: "{n}/{m} 個口令", recNoTime: "—",
       streakLabel: "連續 {d} 天",
-      aboutVer: "語音帶練運動 · v1.7",
+      mixName: "每日組合", mixDesc: "科學編排的隨機循環 · 純徒手",
+      mixDur: "時長", mixLevel: "強度", mixMin: "分鐘", mixPlan: "本次編排",
+      mixStart: "開始", mixShuffle: "換一套", mixShare: "分享 / QR",
+      mixCopy: "複製連結", mixCopied: "已複製", mixShareTitle: "掃碼載入這套編排",
+      mixHint: "離線時可改分享文字碼", mixBad: "無效的代碼",
+      mixIntro: "共 {n} 個動作，約 {m} 分鐘，跟著語音教練做。",
+      mixBrief: "下半身、上半身、核心交替進行；節奏穩定、不要憋氣，感到疼痛就停止。",
+      recExport: "匯出", recExportEmpty: "還沒有記錄可匯出", recExportDone: "已儲存",
+      aboutVer: "語音帶練運動 · v1.8",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
@@ -1304,6 +1396,7 @@
   function briefOf(id) {
     var f = F();
     if (id === "7min" && f.seven) { return f.seven.brief; }
+    if (id === "mix") { return T("mixBrief"); }
     return cueFor(id).brief;
   }
   function cueJoin() { return LANG === "en" ? ". " : (LANG === "ja" ? "。" : "，"); }
@@ -1324,7 +1417,6 @@
     }
     document.documentElement.lang = LANG === "zh" ? "zh-Hant" : (LANG === "ja" ? "ja" : "en");
     langBtn.textContent = { en: "EN", ja: "日本語", zh: "中文" }[LANG];
-    paintMusic();
   }
 
   /* ---------- voice (per-language, zh prefers TW female) ---------- */
@@ -1384,7 +1476,6 @@
 
   function speak(text) {
     if (!voiceOn) { return; }
-    duckMusic(Math.max(1800, Math.min(9000, String(text).length * 95)));
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -1420,112 +1511,8 @@
     } catch (e) {}
   }
 
-  /* ---------- music ----------
-     voice.955827.xyz/products.json is CORS-open and its `preview` URLs point at
-     cdn.955827.xyz/music/*.m4a — the exact same R2 assets the blog's localTracks use.
-     We strip the "#t=0,60" preview fragment, dedupe by URL, and play through the SAME
-     <audio> element that already keeps iOS speech alive. Default OFF: offline or a
-     failed fetch never affects the workout itself. */
-  var MUSIC_SRC = "https://voice.955827.xyz/products.json";
-  var MUSIC_CACHE = "fitcoach_music";
-  var MUSIC_VOL = 0.28, DUCK_VOL = 0.10;
-  var musicTracks = [], musicIdx = 0, musicLoading = false;
-  var musicOn = (function () {
-    try { return localStorage.getItem("fitcoach_music") === "on"; } catch (e) { return false; }
-  })();
-  try { musicIdx = parseInt(localStorage.getItem("fitcoach_music_idx"), 10) || 0; } catch (e) { musicIdx = 0; }
-
-  var musicBtn = document.getElementById("musicBtn");
-  var musicName = document.getElementById("musicName");
-  var musicPrev = document.getElementById("musicPrev");
-  var musicNext = document.getElementById("musicNext");
-
-  function normalizeMusic(data) {
-    var out = [], seen = {}, songs = (data && data.songs) || [];
-    for (var i = 0; i < songs.length; i++) {
-      var s = songs[i], raw = s && s.preview;
-      if (!raw || typeof raw !== "string") { continue; }
-      var url = raw.split("#")[0];
-      /* only trust our own CDN — no third-party audio */
-      if (url.indexOf("https://cdn.955827.xyz/music/") !== 0) { continue; }
-      if (seen[url]) { continue; }
-      seen[url] = true;
-      var t = s.title || {};
-      out.push({
-        url: url,
-        en: t.en || t.hant || t.zh || "Music",
-        ja: t.hant || t.zh || t.en || "音楽",
-        zh: t.hant || t.zh || t.en || "音樂"
-      });
-    }
-    return out;
-  }
-  function musicTitle(t) {
-    if (!t) { return ""; }
-    return LANG === "ja" ? t.ja : (LANG === "zh" ? t.zh : t.en);
-  }
-  function musicTrack() { return musicOn ? musicTracks[musicIdx] : null; }
-  function paintMusic() {
-    if (!musicBtn) { return; }
-    musicBtn.textContent = musicOn ? T("musicOn") : T("musicOff");
-    if (musicOn) { musicBtn.classList.add("on"); } else { musicBtn.classList.remove("on"); }
-    if (!musicTracks.length) {
-      musicName.textContent = musicLoading ? T("musicLoading") : T("musicNone");
-    } else {
-      musicName.textContent = musicTitle(musicTracks[musicIdx] || musicTracks[0]);
-    }
-  }
-  function loadMusic() {
-    try {
-      var c = JSON.parse(localStorage.getItem(MUSIC_CACHE) || "[]");
-      if (Array.isArray(c) && c.length) { musicTracks = c; }
-    } catch (e) {}
-    if (musicIdx >= musicTracks.length) { musicIdx = 0; }
-    paintMusic();
-    if (typeof fetch !== "function") { return; }
-    musicLoading = true; paintMusic();
-    try {
-      fetch(MUSIC_SRC, { cache: "no-store" }).then(function (r) {
-        if (!r.ok) { throw new Error("http " + r.status); }
-        return r.json();
-      }).then(function (d) {
-        var list = normalizeMusic(d);
-        if (list.length) {
-          musicTracks = list;
-          if (musicIdx >= musicTracks.length) { musicIdx = 0; }
-          try { localStorage.setItem(MUSIC_CACHE, JSON.stringify(musicTracks)); } catch (e) {}
-        }
-        musicLoading = false; paintMusic();
-      }, function () {
-        musicLoading = false; paintMusic();
-      });
-    } catch (e) { musicLoading = false; paintMusic(); }
-  }
-  function stepMusic(delta) {
-    if (!musicTracks.length) { return; }
-    musicIdx = (musicIdx + delta + musicTracks.length) % musicTracks.length;
-    try { localStorage.setItem("fitcoach_music_idx", String(musicIdx)); } catch (e) {}
-    paintMusic();
-    /* only switch the audio source while a run is live; otherwise just change the selection */
-    if (musicOn && (timer || paused)) { applyKeepAliveSrc(); playKeepAlive(); setMediaMeta(); }
-  }
-  function toggleMusic() {
-    musicOn = !musicOn;
-    try { localStorage.setItem("fitcoach_music", musicOn ? "on" : "off"); } catch (e) {}
-    paintMusic();
-    if (timer || paused) { applyKeepAliveSrc(); playKeepAlive(); }
-    setMediaMeta();
-  }
-  musicBtn.addEventListener("click", toggleMusic);
-  musicPrev.addEventListener("click", function () { stepMusic(-1); });
-  musicNext.addEventListener("click", function () { stepMusic(1); });
-
-  /* audio session: ONE <audio> element — silent WAV keep-alive (iOS speech) or BGM */
-  var keepAlive = null, silenceURL = null, duckTimer = null;
-  function getSilenceURL() {
-    if (!silenceURL) { silenceURL = makeSilenceURL(); }
-    return silenceURL || "";
-  }
+  /* audio session: silent WAV keep-alive loop (iOS speech) + lock-screen/headset controls */
+  var keepAlive = null;
   function makeSilenceURL() {
     try {
       var rate = 8000, len = rate, buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
@@ -1538,66 +1525,27 @@
       return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
     } catch (e) { return ""; }
   }
-  function applyKeepAliveSrc() {
-    if (!keepAlive) { return; }
-    var t = musicTrack();
-    var want = t ? t.url : getSilenceURL();
-    try {
-      if (keepAlive.getAttribute("data-src") !== want) {
-        keepAlive.setAttribute("data-src", want);
-        keepAlive.src = want;
-        keepAlive.loop = !t;
-        keepAlive.volume = t ? MUSIC_VOL : 0;
-        /* setting src starts loading; an explicit load() can force iOS to
-           demand a fresh user gesture, so deliberately skip it */
-      } else {
-        keepAlive.loop = !t;
-        if (!t) { keepAlive.volume = 0; }
-      }
-    } catch (e) {}
-  }
   function playKeepAlive() {
     try {
       if (!keepAlive) {
         keepAlive = new Audio();
+        keepAlive.src = makeSilenceURL();
+        keepAlive.loop = true;
+        keepAlive.volume = 0;
         keepAlive.preload = "auto";
         keepAlive.setAttribute("playsinline", "");
-        keepAlive.addEventListener("ended", function () {
-          if (musicTrack() && timer) { stepMusic(1); }
-        });
-        keepAlive.addEventListener("error", function () {
-          /* CDN unreachable: fall back to the silent loop, never break the workout */
-          if (musicTrack()) {
-            musicOn = false;
-            paintMusic();
-            applyKeepAliveSrc();
-            var p = keepAlive.play();
-            if (p && p.catch) { p.catch(function () {}); }
-          }
-        });
       }
-      applyKeepAliveSrc();
       var p = keepAlive.play();
       if (p && p.catch) { p.catch(function () {}); }
     } catch (e) {}
   }
-  function duckMusic(ms) {
-    if (!musicTrack() || !keepAlive) { return; }
-    try { keepAlive.volume = DUCK_VOL; } catch (e) {}
-    if (duckTimer) { clearTimeout(duckTimer); }
-    duckTimer = setTimeout(function () {
-      duckTimer = null;
-      if (musicTrack() && keepAlive) { try { keepAlive.volume = MUSIC_VOL; } catch (e) {} }
-    }, ms || 2600);
-  }
   function setMediaMeta() {
     try {
       if (!("mediaSession" in navigator) || !window.MediaMetadata) { return; }
-      var st = steps[idx], t = musicTrack();
+      var st = steps[idx];
       navigator.mediaSession.metadata = new MediaMetadata({
         title: (current ? T(current.nameKey) : "Fit Coach") + (st ? " · " + st.label : ""),
-        artist: t ? musicTitle(t) : "Fit Coach",
-        album: t ? "Voice playlist" : "Guided workout"
+        artist: "Fit Coach", album: "Guided workout"
       });
     } catch (e) {}
   }
@@ -1615,17 +1563,9 @@
         navigator.mediaSession.setActionHandler("stop", function () { if (timer || paused) { stop(); } });
       }
     } catch (e) {}
-    /* lock-screen / headset track skip — no extra on-screen button */
-    try {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("nexttrack", function () { if (musicOn) { stepMusic(1); } });
-        navigator.mediaSession.setActionHandler("previoustrack", function () { if (musicOn) { stepMusic(-1); } });
-      }
-    } catch (e) {}
   }
   function stopAudioSession() {
-    if (keepAlive) { try { keepAlive.pause(); keepAlive.currentTime = 0; } catch (e) {} }
-    if (duckTimer) { clearTimeout(duckTimer); duckTimer = null; }
+    if (keepAlive) { try { keepAlive.pause(); } catch (e) {} }
     setMediaState("none");
   }
 
@@ -1791,6 +1731,243 @@
     { id: "tabata", icon: "⏲️", nameKey: "tabataName", descKey: "tabataDesc", build: null }
   ];
 
+  /* ---------- Daily Mix: science-based random bodyweight circuit ----------
+     Order follows ACSM (warm-up -> conditioning -> cool-down) and the 7-Minute
+     Workout pool (Klika & Jordan 2013, ACSM's Health & Fitness Journal).
+     NSCA-style alternation: lower / upper / core / cardio rotate so the same
+     muscle group is never trained back-to-back. Every name, spoken cue, demo
+     and form cue is reused from the 7-Minute library — zero new content. */
+  var MIX_MOVES = [
+    { mk: 1,  demo: "jack",      g: "cardio" },
+    { mk: 2,  demo: "wallsit",   g: "lower"  },
+    { mk: 3,  demo: "pushup",    g: "upper"  },
+    { mk: 4,  demo: "crunch",    g: "core"   },
+    { mk: 5,  demo: "stepup",    g: "lower"  },
+    { mk: 6,  demo: "squat",     g: "lower"  },
+    { mk: 7,  demo: "dip",       g: "upper"  },
+    { mk: 8,  demo: "plank",     g: "core"   },
+    { mk: 9,  demo: "knees",     g: "cardio" },
+    { mk: 10, demo: "lunge",     g: "lower"  },
+    { mk: 11, demo: "pushup",    g: "upper"  },
+    { mk: 12, demo: "sideplank", g: "core"   }
+  ];
+  var MIX_PATTERN = ["lower", "upper", "core", "cardio", "lower", "upper", "core"];
+  var MIX_DURS = [10, 15, 20], MIX_RESTS = [20, 15, 10], MIX_WORK = 40;
+  var mixCfg = { d: 1, l: 1, seq: [] };
+  var MIX_WORKOUT = { id: "mix", icon: "🎲", nameKey: "mixName", descKey: "mixDesc", build: buildMix };
+
+  function mixCount() {
+    var unit = MIX_WORK + MIX_RESTS[mixCfg.l];
+    return Math.max(4, Math.min(24, Math.round((MIX_DURS[mixCfg.d] * 60 - 8) / unit)));
+  }
+  function mixPool(g) {
+    var out = [];
+    for (var i = 0; i < MIX_MOVES.length; i++) { if (MIX_MOVES[i].g === g) { out.push(i); } }
+    return out;
+  }
+  function mixRandomSeq() {
+    var n = mixCount(), seq = [], last = -1, lastG = "";
+    for (var i = 0; i < n; i++) {
+      /* ACSM order: cardio warm-up first, core cool-down last.
+         NSCA alternation: never train the same muscle group back-to-back. */
+      var g = (i === 0) ? "cardio" : ((i === n - 1 && n > 2) ? "core" : MIX_PATTERN[i % MIX_PATTERN.length]);
+      if (g === lastG) {
+        for (var q = 0; q < MIX_PATTERN.length; q++) {
+          var cand = MIX_PATTERN[(i + q) % MIX_PATTERN.length];
+          if (cand !== lastG) { g = cand; break; }
+        }
+      }
+      var pool = mixPool(g), alt = [];
+      for (var k = 0; k < pool.length; k++) { if (pool[k] !== last) { alt.push(pool[k]); } }
+      if (!alt.length) { alt = pool; }
+      var pick = alt[Math.floor(Math.random() * alt.length)];
+      seq.push(pick);
+      last = pick;
+      lastG = g;
+    }
+    return seq;
+  }
+  /* Self-contained compact code: "1" + duration + level + one base36 char per
+     move (0..b = the 12 moves). Even a 20-min circuit is ~25 characters, so it
+     fits a QR code with no backend and no plan database. */
+  function mixEncode() {
+    var s = "1" + mixCfg.d + mixCfg.l;
+    for (var i = 0; i < mixCfg.seq.length; i++) { s += mixCfg.seq[i].toString(36); }
+    return s;
+  }
+  function mixDecode(code) {
+    if (!code || code.charAt(0) !== "1" || code.length < 5 || code.length > 30) { return null; }
+    var d = parseInt(code.charAt(1), 10), l = parseInt(code.charAt(2), 10);
+    if (!(d >= 0 && d <= 2 && l >= 0 && l <= 2)) { return null; }
+    var seq = [];
+    for (var i = 3; i < code.length; i++) {
+      var v = parseInt(code.charAt(i), 36);
+      if (!(v >= 0 && v < MIX_MOVES.length)) { return null; }
+      seq.push(v);
+    }
+    return seq.length ? { d: d, l: l, seq: seq.slice(0, 24) } : null;
+  }
+  function buildMix() {
+    if (!mixCfg.seq.length) { mixCfg.seq = mixRandomSeq(); }
+    var seq = mixCfg.seq, n = seq.length, rest = MIX_RESTS[mixCfg.l], steps = [];
+    var intro = S(T("ready"), T("mixIntro", { n: n, m: MIX_DURS[mixCfg.d] }), 5, "idle", n + " " + T("mixMin"));
+    intro.isIntro = true;
+    steps.push(intro);
+    for (var i = 0; i < n; i++) {
+      var mv = MIX_MOVES[seq[i]], key = "m" + mv.mk;
+      var work = S(T(key + "t"), T(key + "s"), MIX_WORK, i % 2 === 0 ? "contract" : "release",
+        T("moveSub", { i: i + 1, n: n }), mv.demo);
+      work.mk = mv.mk;                 /* attachCues() picks this move's form cue */
+      steps.push(work);
+      if (i < n - 1) {
+        var nx = MIX_MOVES[seq[i + 1]], nkey = "m" + nx.mk;
+        var rs = S(T("rest"), T("rest"), rest, "idle", T("next", { x: T(nkey + "t") }), nx.demo);
+        rs.nextMk = nx.mk;             /* rest previews the NEXT move's cue */
+        steps.push(rs);
+      }
+    }
+    steps.push(S(T("done"), T("greatJob") + " " + T("q3s"), 3, "idle", ""));
+    return steps;
+  }
+
+  /* ---------- Mix planner UI (collapsed by default; no new tab, no new nav button) ---------- */
+  var mixCard = document.getElementById("mixCard");
+  var mixHead = document.getElementById("mixHead");
+  var mixArrow = document.getElementById("mixArrow");
+  var mixDurRow = document.getElementById("mixDurRow");
+  var mixLvRow = document.getElementById("mixLvRow");
+  var mixPlan = document.getElementById("mixPlan");
+  var mixShareBox = document.getElementById("mixShareBox");
+  var mixQr = document.getElementById("mixQr");
+  var mixUrl = document.getElementById("mixUrl");
+  var mixCopyBtn = document.getElementById("mixCopy");
+  var exportBtn = document.getElementById("exportBtn");
+
+  function paintMixOpts() {
+    var db = mixDurRow.querySelectorAll("button");
+    for (var i = 0; i < db.length; i++) {
+      db[i].textContent = MIX_DURS[i] + " " + T("mixMin");
+      db[i].classList.toggle("on", i === mixCfg.d);
+    }
+    var lb = mixLvRow.querySelectorAll("button");
+    for (var j = 0; j < lb.length; j++) { lb[j].classList.toggle("on", j === mixCfg.l); }
+  }
+  function paintMixPlan() {
+    mixPlan.innerHTML = "";
+    for (var i = 0; i < mixCfg.seq.length; i++) {
+      var mk = MIX_MOVES[mixCfg.seq[i]].mk;
+      var line = document.createElement("div");
+      var b = document.createElement("b"); b.textContent = pad2(i + 1);
+      line.appendChild(b);
+      line.appendChild(document.createTextNode(T("m" + mk + "t")));
+      mixPlan.appendChild(line);
+    }
+  }
+  function paintMix() {
+    if (!mixCfg.seq.length) { mixCfg.seq = mixRandomSeq(); }
+    paintMixOpts();
+    paintMixPlan();
+  }
+  function mixRegenerate() {
+    mixCfg.seq = mixRandomSeq();
+    paintMix();
+    mixShareBox.classList.remove("show");
+  }
+  mixHead.addEventListener("click", function () {
+    var open = mixCard.classList.toggle("open");
+    mixArrow.textContent = open ? "−" : "+";
+    if (open) { paintMix(); }
+  });
+  (function wireMixOpts() {
+    var db = mixDurRow.querySelectorAll("button");
+    for (var i = 0; i < db.length; i++) {
+      (function (idx) { db[i].addEventListener("click", function () { mixCfg.d = idx; mixRegenerate(); }); })(i);
+    }
+    var lb = mixLvRow.querySelectorAll("button");
+    for (var j = 0; j < lb.length; j++) {
+      (function (idx) { lb[j].addEventListener("click", function () { mixCfg.l = idx; mixRegenerate(); }); })(j);
+    }
+  })();
+  document.getElementById("mixStart").addEventListener("click", function () {
+    if (!mixCfg.seq.length) { mixRegenerate(); }
+    openWorkout(MIX_WORKOUT);
+  });
+  document.getElementById("mixShuffle").addEventListener("click", mixRegenerate);
+  document.getElementById("mixShare").addEventListener("click", function () {
+    var url = location.origin + "/?mix=" + encodeURIComponent(mixEncode());
+    mixUrl.textContent = url;
+    /* same generator rcj-card uses; the code carries the whole plan, so no backend */
+    mixQr.src = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=" + encodeURIComponent(url);
+    mixShareBox.classList.add("show");
+  });
+  mixCopyBtn.addEventListener("click", function () {
+    var b = mixCopyBtn, url = mixUrl.textContent || "";
+    /* instant feedback; the clipboard write is best-effort and never blocks the UI */
+    b.textContent = T("mixCopied");
+    setTimeout(function () { b.textContent = T("mixCopy"); }, 1600);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).catch(function () {});
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = url; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    } catch (e) {}
+  });
+
+  /* "Import a plan" = scan / paste a ?mix= code. No account, no plan library. */
+  function readMixCode() {
+    try {
+      var m = (location.search || "").match(/[?&]mix=([^&]+)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    } catch (e) { return ""; }
+  }
+  function loadMixFromUrl() {
+    var code = readMixCode();
+    if (!code) { return false; }
+    var cfg = mixDecode(code);
+    mixCard.classList.add("open");
+    mixArrow.textContent = "−";
+    if (!cfg) { mixPlan.textContent = T("mixBad"); return false; }
+    mixCfg = cfg;
+    paintMix();
+    return true;
+  }
+
+  /* Export records as CSV — a few hundred rows cannot fit a QR code, so this
+     is a local file download instead. No backend, no external dependency. */
+  exportBtn.addEventListener("click", function () {
+    var ses = loadSessions().slice().sort(function (a, b) { return (b.t || 0) - (a.t || 0); });
+    if (!ses.length) {
+      exportBtn.textContent = T("recExportEmpty");
+      setTimeout(function () { exportBtn.textContent = T("recExport"); }, 1800);
+      return;
+    }
+    var rows = [["date_time", "move", "duration_sec", "status", "cues_done", "cues_total"]];
+    for (var i = 0; i < ses.length; i++) {
+      var s = ses[i], t = s.t || Date.parse(s.d || "") || Date.now();
+      rows.push([
+        new Date(t).toISOString(), nameOf(s.w, s.n),
+        (typeof s.secs === "number" && s.secs >= 0) ? Math.round(s.secs) : "",
+        s.full === false ? "early" : "done", s.cues || 0, s.total || 0
+      ]);
+    }
+    var csv = rows.map(function (r) {
+      return r.map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
+    }).join("\r\n");
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+      a.download = "fitcoach-records-" + dateKey(new Date()) + ".csv";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      exportBtn.textContent = T("recExportDone");
+      setTimeout(function () { exportBtn.textContent = T("recExport"); }, 1800);
+    } catch (e) {}
+  });
+
   /* Attach an evidence-based form cue to every step:
      - work cues  -> the move's primary technique cue (shown the whole time)
      - rest cues  -> rotating safety/technique notes, also spoken when the rest is long enough
@@ -1798,11 +1975,11 @@
   function attachCues(list, id) {
     var f = F();
     var c = cueFor(id);
-    var seven = (id === "7min") ? f.seven : null;
+    var seven = (id === "7min" || id === "mix") ? f.seven : null;
     var ri = 0;
     for (var i = 0; i < list.length; i++) {
       var st = list[i];
-      if (st.isIntro) { st.tip = seven ? seven.brief : c.brief; st.tipTag = "form"; }
+      if (st.isIntro) { st.tip = id === "mix" ? T("mixBrief") : (seven ? seven.brief : c.brief); st.tipTag = "form"; }
       else if (seven && st.mk) { st.tip = seven.moves[st.mk - 1]; st.tipTag = "form"; }
       else if (seven && st.nextMk) { st.tip = seven.moves[st.nextMk - 1]; st.tipTag = "note"; }
       else if (st.cls === "idle" && st.secs >= 4) {
@@ -1853,6 +2030,7 @@
     paintVoice();
     renderHistory();
     renderGuide();
+    paintMix();
     resetClear();
     if (current) {
       attachCues(steps, current.id);
@@ -2023,7 +2201,8 @@
     steps = w.build ? w.build() : [];
     idx = -1;
     current = w;
-    try { history.pushState(null, "", "/" + w.id); } catch (e) {}
+    /* keep the mix code in the URL so a refresh reproduces the exact circuit */
+    try { history.pushState(null, "", w.id === "mix" ? "/?mix=" + mixEncode() : "/" + w.id); } catch (e) {}
     showScreen(sessionEl);
     tabbar.classList.add("hide");
     look("idle", T("ready"));
@@ -2032,7 +2211,7 @@
     progressEl.style.width = "0%";
     document.getElementById("quip").classList.remove("show");
     demoEl.className = "demo";
-    levelRow.classList.toggle("hide", w.id === "tabata");
+    levelRow.classList.toggle("hide", w.id === "tabata" || w.id === "mix");
     setupPanel.classList.toggle("show", w.id === "tabata");
     if (w.id === "tabata") { loadTabataCfg(); }
     btn.textContent = T("start");
@@ -2041,6 +2220,7 @@
   function goHome(push) {
     if (timer) { clearInterval(timer); timer = null; }
     paused = false;
+    document.body.classList.remove("running");
     hideRunCtrls();
     morePanel.classList.remove("show");
     hideCue();
@@ -2103,6 +2283,7 @@
   function start() {
     paused = false;
     ended = false;
+    document.body.classList.add("running");   /* suppress pull-to-refresh only during a run */
     idx = -1;                 /* critical: replay must start from the first cue */
     runStartAt = Date.now();
     pausedAt = 0;
@@ -2193,6 +2374,7 @@
     stopTimer();
     paused = false;
     ended = true;
+    document.body.classList.remove("running");
     releaseWake();
     stopAudioSession();
     hideRunCtrls();
@@ -2208,8 +2390,8 @@
       progressEl.style.width = "100%";
     }
     btn.textContent = T("again");
-    if (current.id !== "tabata") { levelRow.classList.remove("hide"); }
-    else { setupPanel.classList.add("show"); }
+    if (current.id !== "tabata" && current.id !== "mix") { levelRow.classList.remove("hide"); }
+    else if (current.id === "tabata") { setupPanel.classList.add("show"); }
     saveToday(current.id, {
       secs: elapsedSecs(),
       cues: doneN,
@@ -2371,6 +2553,7 @@
   }
   function nameOf(id, custom) {
     if (id === "tabata" && custom) { return custom; }
+    if (id === "mix") { return T("mixName"); }
     for (var i = 0; i < WORKOUTS.length; i++) {
       if (WORKOUTS[i].id === id) { return T(WORKOUTS[i].nameKey); }
     }
@@ -2575,13 +2758,18 @@
   })();
 
   /* boot */
+  /* one-time cleanup: the removed music feature left these keys behind */
+  try {
+    localStorage.removeItem("fitcoach_music");
+    localStorage.removeItem("fitcoach_music_idx");
+  } catch (e) {}
   applyI18n();
-  loadMusic();
   paintVoice();
   renderList();
   renderHistory();
   renderGuide();
   route();
+  loadMixFromUrl();
 })();
 </script>
 </body>

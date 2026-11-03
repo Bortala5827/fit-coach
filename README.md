@@ -6,7 +6,7 @@ Voice-guided workouts in your browser. Press go, follow the coach — no account
 
 ## What's inside
 
-9 entries — 8 coached workouts plus a custom Tabata timer — with real-time voice coaching, synced stick-figure demos, haptic cues and a progress ring:
+9 coached workouts plus a custom Tabata timer and a **Daily Mix** circuit generator — with real-time voice coaching, synced stick-figure demos, haptic cues and a progress ring:
 
 | | Workout | Format |
 |---|---|---|
@@ -26,11 +26,12 @@ Every workout has three intensity levels (Light / Standard / Hard). Rest screens
 
 - **Audio-first** — built with the Web Speech API, so you can train without watching the screen. Toggle voice off anytime.
 - **Synced demos** — an animated stick figure mirrors every cue, so form is never a guess.
-- **Three tabs** — Train / Technique / Records. Technique is a lookup of evidence-based form cues; Records keeps per-session duration, move, cue count and completion state, with a one-tap clear.
-- **Optional background music** — the playlist is fetched from `voice.955827.xyz/products.json`, which points at the same self-hosted `cdn.955827.xyz/music/*.m4a` tracks the blog uses. It plays at low volume and ducks automatically whenever the coach speaks. Off by default; offline or an unreachable playlist silently falls back to no music and never blocks a workout.
+- **Daily Mix** — a science-based random bodyweight circuit. Pick a duration (10/15/20 min) and intensity; moves are ordered warm-up → alternating lower/upper/core/cardio → cool-down, following ACSM and the 7-Minute Workout (Klika & Jordan 2013). Reuses the same voice cues, demos and form cues, so there is no new content to maintain. Shuffle for a new circuit.
+- **Share & import a plan by QR** — the whole circuit is encoded into a short `?mix=` code, so a QR code carries the plan itself with no backend and no plan database. Scan or paste the link to load the exact same circuit on another device. Uses the same `api.qrserver.com` generator as `rcj-card`.
+- **Three tabs** — Train / Technique / Records. Technique is a lookup of evidence-based form cues; Records keeps per-session duration, move, cue count and completion state, with a one-tap clear and a CSV export.
 - **Zero backend** — one HTML file. Works offline once loaded. All progress lives in `localStorage`.
 - **Private by default** — no account, no analytics on your behavior, no data collection.
-- **Deep links** — `/kegel`, `/boxing`, `/7min`, `/tabata`, `/guide`, `/records` … each is its own landing path.
+- **Deep links** — `/kegel`, `/boxing`, `/7min`, `/tabata`, `/guide`, `/records` … plus `/?mix=<code>` to load a shared circuit.
 
 ## Run locally
 
