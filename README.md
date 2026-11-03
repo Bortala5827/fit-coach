@@ -1,6 +1,6 @@
 # Fit Coach
 
-Voice-guided workouts in your browser. Press go, follow the coach — no account, no tracking, nothing leaves your device.
+Voice-guided workouts in your browser. Press go, follow the coach — no account, no tracking, no training data leaves your device.
 
 **Live:** https://fit.955827.xyz
 
@@ -27,6 +27,7 @@ Every workout has three intensity levels (Light / Standard / Hard). Rest screens
 - **Audio-first** — built with the Web Speech API, so you can train without watching the screen. Toggle voice off anytime.
 - **Synced demos** — an animated stick figure mirrors every cue, so form is never a guess.
 - **Three tabs** — Train / Technique / Records. Technique is a lookup of evidence-based form cues; Records keeps per-session duration, move, cue count and completion state, with a one-tap clear.
+- **Optional background music** — the playlist is fetched from `voice.955827.xyz/products.json`, which points at the same self-hosted `cdn.955827.xyz/music/*.m4a` tracks the blog uses. It plays at low volume and ducks automatically whenever the coach speaks. Off by default; offline or an unreachable playlist silently falls back to no music and never blocks a workout.
 - **Zero backend** — one HTML file. Works offline once loaded. All progress lives in `localStorage`.
 - **Private by default** — no account, no analytics on your behavior, no data collection.
 - **Deep links** — `/kegel`, `/boxing`, `/7min`, `/tabata`, `/guide`, `/records` … each is its own landing path.

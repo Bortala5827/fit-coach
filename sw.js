@@ -1,4 +1,4 @@
-const CACHE = "fitcoach-v8";
+const CACHE = "fitcoach-v9";
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
@@ -20,6 +20,12 @@ self.addEventListener("activate", function (e) {
 
 self.addEventListener("fetch", function (e) {
   var req = e.request;
+  /* Cross-origin (voice playlist + CDN audio) must never be cached here:
+     caching products.json would freeze the playlist, and caching m4a tracks
+     would bloat storage with tens of megabytes. Let the network handle them. */
+  try {
+    if (new URL(req.url).origin !== self.location.origin) { return; }
+  } catch (err) { return; }
   if (req.mode === "navigate") {
     e.respondWith(
       fetch(req)

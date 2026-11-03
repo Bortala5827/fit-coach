@@ -286,6 +286,14 @@
   .more-panel.show { display: block; }
   .more-panel .level-row { margin: 0 0 14px; }
   .more-panel .btn-ghost { width: 100%; }
+  .music-row { margin-top: 10px; }
+  .music-row .btn-ghost.on { color: #c9805e; border-color: #c9805e; }
+  .music-line { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .music-name { flex: 1; min-width: 0; font-size: 12px; color: #8a7f70; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini { flex: none; width: 30px; height: 30px; padding: 0; border-radius: 50%;
+    border: 1px solid #e8dfd0; background: #fff; color: #c9805e;
+    font-size: 18px; line-height: 1; cursor: pointer; }
 
   /* stats & about screens */
   .scr-title { font-size: 20px; font-weight: 700; letter-spacing: 2px; margin-top: 8px; }
@@ -741,6 +749,14 @@
         <button class="lvl" data-lv="2" data-i18n="level2">Hard</button>
       </div>
       <button id="voiceBtn" class="btn-ghost">Voice: on</button>
+      <div class="music-row" id="musicRow">
+        <button id="musicBtn" class="btn-ghost">Music: off</button>
+        <div class="music-line">
+          <button id="musicPrev" class="mini" aria-label="Previous">&#8249;</button>
+          <div class="music-name" id="musicName"></div>
+          <button id="musicNext" class="mini" aria-label="Next">&#8250;</button>
+        </div>
+      </div>
     </div>
     <div class="setup" id="setupPanel">
       <label><span data-i18n="cfgWork">Work</span> <input id="cfgWork" type="number" min="5" max="300" value="20">s</label>
@@ -797,7 +813,7 @@
     <div class="about-card compact">
       <img class="about-logo" src="/logo.svg" alt="Fit Coach">
       <div class="about-name">Fit Coach</div>
-      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.6</div>
+      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.7</div>
       <p class="tip"><span data-i18n="privacy1">No account. No tracking.</span><br><span data-i18n="privacy2">Your data stays on your device.</span></p>
       <p class="tip" data-i18n="disclaimer">General fitness guidance only. Not medical advice. Stop if you feel pain.</p>
       <button class="btn-ghost install-btn js-install" data-i18n="install">Install app</button>
@@ -844,6 +860,8 @@
       voiceOn: "Voice: on", voiceOff: "Voice: off",
       back: "Back", ready: "Ready", done: "Done", rest: "Rest",
       options: "Options", formTag: "FORM", noteTag: "NOTE",
+      musicOn: "Music: on", musicOff: "Music: off",
+      musicNone: "No playlist (offline)", musicLoading: "Loading playlist…",
       level0: "Light", level1: "Standard", level2: "Hard",
       cuesInfo: "{name} · {n} cues",
       finishSummary: "{name} · {n} cues · about {m} min · {d}",
@@ -900,7 +918,7 @@
       recEmpty: "No sessions yet. Go train.", recDone: "Done", recEarly: "Early",
       recCues: "{n}/{m} cues", recNoTime: "—",
       streakLabel: "Streak: {d} days",
-      aboutVer: "Voice-guided workouts · v1.6",
+      aboutVer: "Voice-guided workouts · v1.7",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
@@ -936,6 +954,8 @@
       voiceOn: "音声: オン", voiceOff: "音声: オフ",
       back: "戻る", ready: "準備", done: "完了", rest: "休憩",
       options: "設定", formTag: "フォーム", noteTag: "注意",
+      musicOn: "音楽: オン", musicOff: "音楽: オフ",
+      musicNone: "プレイリストなし（オフライン）", musicLoading: "読み込み中…",
       level0: "ライト", level1: "標準", level2: "ハード",
       cuesInfo: "{name} · {n} ステップ",
       finishSummary: "{name} · {n} ステップ · 約 {m} 分 · {d}",
@@ -992,7 +1012,7 @@
       recEmpty: "まだ記録がありません。練習しましょう。", recDone: "完了", recEarly: "途中終了",
       recCues: "{n}/{m} ステップ", recNoTime: "—",
       streakLabel: "連続 {d} 日",
-      aboutVer: "音声ガイド付きトレーニング · v1.6",
+      aboutVer: "音声ガイド付きトレーニング · v1.7",
       privacy1: "アカウント不要。トラッキングなし。",
       privacy2: "データは端末から出ません。",
       disclaimer: "一般的なフィットネス案内です。医療アドバイスではありません。痛みを感じたら中止してください。",
@@ -1028,6 +1048,8 @@
       voiceOn: "語音：開", voiceOff: "語音：關",
       back: "返回", ready: "預備", done: "完成", rest: "休息",
       options: "選項", formTag: "動作要領", noteTag: "注意",
+      musicOn: "音樂：開", musicOff: "音樂：關",
+      musicNone: "沒有歌單（離線）", musicLoading: "載入歌單中…",
       level0: "輕鬆", level1: "標準", level2: "加強",
       cuesInfo: "{name} · {n} 個口令",
       finishSummary: "{name} · {n} 個口令 · 約 {m} 分鐘 · {d}",
@@ -1084,7 +1106,7 @@
       recEmpty: "還沒有記錄，去練一組吧。", recDone: "完成", recEarly: "提前結束",
       recCues: "{n}/{m} 個口令", recNoTime: "—",
       streakLabel: "連續 {d} 天",
-      aboutVer: "語音帶練運動 · v1.6",
+      aboutVer: "語音帶練運動 · v1.7",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
@@ -1302,6 +1324,7 @@
     }
     document.documentElement.lang = LANG === "zh" ? "zh-Hant" : (LANG === "ja" ? "ja" : "en");
     langBtn.textContent = { en: "EN", ja: "日本語", zh: "中文" }[LANG];
+    paintMusic();
   }
 
   /* ---------- voice (per-language, zh prefers TW female) ---------- */
@@ -1361,6 +1384,7 @@
 
   function speak(text) {
     if (!voiceOn) { return; }
+    duckMusic(Math.max(1800, Math.min(9000, String(text).length * 95)));
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -1396,8 +1420,112 @@
     } catch (e) {}
   }
 
-  /* audio session: silent keep-alive loop (iOS speech) + lock-screen/headset controls */
-  var keepAlive = null;
+  /* ---------- music ----------
+     voice.955827.xyz/products.json is CORS-open and its `preview` URLs point at
+     cdn.955827.xyz/music/*.m4a — the exact same R2 assets the blog's localTracks use.
+     We strip the "#t=0,60" preview fragment, dedupe by URL, and play through the SAME
+     <audio> element that already keeps iOS speech alive. Default OFF: offline or a
+     failed fetch never affects the workout itself. */
+  var MUSIC_SRC = "https://voice.955827.xyz/products.json";
+  var MUSIC_CACHE = "fitcoach_music";
+  var MUSIC_VOL = 0.28, DUCK_VOL = 0.10;
+  var musicTracks = [], musicIdx = 0, musicLoading = false;
+  var musicOn = (function () {
+    try { return localStorage.getItem("fitcoach_music") === "on"; } catch (e) { return false; }
+  })();
+  try { musicIdx = parseInt(localStorage.getItem("fitcoach_music_idx"), 10) || 0; } catch (e) { musicIdx = 0; }
+
+  var musicBtn = document.getElementById("musicBtn");
+  var musicName = document.getElementById("musicName");
+  var musicPrev = document.getElementById("musicPrev");
+  var musicNext = document.getElementById("musicNext");
+
+  function normalizeMusic(data) {
+    var out = [], seen = {}, songs = (data && data.songs) || [];
+    for (var i = 0; i < songs.length; i++) {
+      var s = songs[i], raw = s && s.preview;
+      if (!raw || typeof raw !== "string") { continue; }
+      var url = raw.split("#")[0];
+      /* only trust our own CDN — no third-party audio */
+      if (url.indexOf("https://cdn.955827.xyz/music/") !== 0) { continue; }
+      if (seen[url]) { continue; }
+      seen[url] = true;
+      var t = s.title || {};
+      out.push({
+        url: url,
+        en: t.en || t.hant || t.zh || "Music",
+        ja: t.hant || t.zh || t.en || "音楽",
+        zh: t.hant || t.zh || t.en || "音樂"
+      });
+    }
+    return out;
+  }
+  function musicTitle(t) {
+    if (!t) { return ""; }
+    return LANG === "ja" ? t.ja : (LANG === "zh" ? t.zh : t.en);
+  }
+  function musicTrack() { return musicOn ? musicTracks[musicIdx] : null; }
+  function paintMusic() {
+    if (!musicBtn) { return; }
+    musicBtn.textContent = musicOn ? T("musicOn") : T("musicOff");
+    if (musicOn) { musicBtn.classList.add("on"); } else { musicBtn.classList.remove("on"); }
+    if (!musicTracks.length) {
+      musicName.textContent = musicLoading ? T("musicLoading") : T("musicNone");
+    } else {
+      musicName.textContent = musicTitle(musicTracks[musicIdx] || musicTracks[0]);
+    }
+  }
+  function loadMusic() {
+    try {
+      var c = JSON.parse(localStorage.getItem(MUSIC_CACHE) || "[]");
+      if (Array.isArray(c) && c.length) { musicTracks = c; }
+    } catch (e) {}
+    if (musicIdx >= musicTracks.length) { musicIdx = 0; }
+    paintMusic();
+    if (typeof fetch !== "function") { return; }
+    musicLoading = true; paintMusic();
+    try {
+      fetch(MUSIC_SRC, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) { throw new Error("http " + r.status); }
+        return r.json();
+      }).then(function (d) {
+        var list = normalizeMusic(d);
+        if (list.length) {
+          musicTracks = list;
+          if (musicIdx >= musicTracks.length) { musicIdx = 0; }
+          try { localStorage.setItem(MUSIC_CACHE, JSON.stringify(musicTracks)); } catch (e) {}
+        }
+        musicLoading = false; paintMusic();
+      }, function () {
+        musicLoading = false; paintMusic();
+      });
+    } catch (e) { musicLoading = false; paintMusic(); }
+  }
+  function stepMusic(delta) {
+    if (!musicTracks.length) { return; }
+    musicIdx = (musicIdx + delta + musicTracks.length) % musicTracks.length;
+    try { localStorage.setItem("fitcoach_music_idx", String(musicIdx)); } catch (e) {}
+    paintMusic();
+    /* only switch the audio source while a run is live; otherwise just change the selection */
+    if (musicOn && (timer || paused)) { applyKeepAliveSrc(); playKeepAlive(); setMediaMeta(); }
+  }
+  function toggleMusic() {
+    musicOn = !musicOn;
+    try { localStorage.setItem("fitcoach_music", musicOn ? "on" : "off"); } catch (e) {}
+    paintMusic();
+    if (timer || paused) { applyKeepAliveSrc(); playKeepAlive(); }
+    setMediaMeta();
+  }
+  musicBtn.addEventListener("click", toggleMusic);
+  musicPrev.addEventListener("click", function () { stepMusic(-1); });
+  musicNext.addEventListener("click", function () { stepMusic(1); });
+
+  /* audio session: ONE <audio> element — silent WAV keep-alive (iOS speech) or BGM */
+  var keepAlive = null, silenceURL = null, duckTimer = null;
+  function getSilenceURL() {
+    if (!silenceURL) { silenceURL = makeSilenceURL(); }
+    return silenceURL || "";
+  }
   function makeSilenceURL() {
     try {
       var rate = 8000, len = rate, buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
@@ -1410,26 +1538,66 @@
       return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
     } catch (e) { return ""; }
   }
+  function applyKeepAliveSrc() {
+    if (!keepAlive) { return; }
+    var t = musicTrack();
+    var want = t ? t.url : getSilenceURL();
+    try {
+      if (keepAlive.getAttribute("data-src") !== want) {
+        keepAlive.setAttribute("data-src", want);
+        keepAlive.src = want;
+        keepAlive.loop = !t;
+        keepAlive.volume = t ? MUSIC_VOL : 0;
+        /* setting src starts loading; an explicit load() can force iOS to
+           demand a fresh user gesture, so deliberately skip it */
+      } else {
+        keepAlive.loop = !t;
+        if (!t) { keepAlive.volume = 0; }
+      }
+    } catch (e) {}
+  }
   function playKeepAlive() {
     try {
       if (!keepAlive) {
         keepAlive = new Audio();
-        keepAlive.src = makeSilenceURL();
-        keepAlive.loop = true;
         keepAlive.preload = "auto";
         keepAlive.setAttribute("playsinline", "");
+        keepAlive.addEventListener("ended", function () {
+          if (musicTrack() && timer) { stepMusic(1); }
+        });
+        keepAlive.addEventListener("error", function () {
+          /* CDN unreachable: fall back to the silent loop, never break the workout */
+          if (musicTrack()) {
+            musicOn = false;
+            paintMusic();
+            applyKeepAliveSrc();
+            var p = keepAlive.play();
+            if (p && p.catch) { p.catch(function () {}); }
+          }
+        });
       }
+      applyKeepAliveSrc();
       var p = keepAlive.play();
       if (p && p.catch) { p.catch(function () {}); }
     } catch (e) {}
   }
+  function duckMusic(ms) {
+    if (!musicTrack() || !keepAlive) { return; }
+    try { keepAlive.volume = DUCK_VOL; } catch (e) {}
+    if (duckTimer) { clearTimeout(duckTimer); }
+    duckTimer = setTimeout(function () {
+      duckTimer = null;
+      if (musicTrack() && keepAlive) { try { keepAlive.volume = MUSIC_VOL; } catch (e) {} }
+    }, ms || 2600);
+  }
   function setMediaMeta() {
     try {
       if (!("mediaSession" in navigator) || !window.MediaMetadata) { return; }
-      var st = steps[idx];
+      var st = steps[idx], t = musicTrack();
       navigator.mediaSession.metadata = new MediaMetadata({
         title: (current ? T(current.nameKey) : "Fit Coach") + (st ? " · " + st.label : ""),
-        artist: "Fit Coach", album: "Guided workout"
+        artist: t ? musicTitle(t) : "Fit Coach",
+        album: t ? "Voice playlist" : "Guided workout"
       });
     } catch (e) {}
   }
@@ -1447,9 +1615,17 @@
         navigator.mediaSession.setActionHandler("stop", function () { if (timer || paused) { stop(); } });
       }
     } catch (e) {}
+    /* lock-screen / headset track skip — no extra on-screen button */
+    try {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.setActionHandler("nexttrack", function () { if (musicOn) { stepMusic(1); } });
+        navigator.mediaSession.setActionHandler("previoustrack", function () { if (musicOn) { stepMusic(-1); } });
+      }
+    } catch (e) {}
   }
   function stopAudioSession() {
-    if (keepAlive) { try { keepAlive.pause(); } catch (e) {} }
+    if (keepAlive) { try { keepAlive.pause(); keepAlive.currentTime = 0; } catch (e) {} }
+    if (duckTimer) { clearTimeout(duckTimer); duckTimer = null; }
     setMediaState("none");
   }
 
@@ -2073,6 +2249,7 @@
     pausedAt = Date.now();
     btn.textContent = T("resume");
     setMediaState("paused");
+    if (keepAlive) { try { keepAlive.pause(); } catch (e) {} }
     try { speechSynthesis.cancel(); } catch (e) {}
   }
 
@@ -2399,6 +2576,7 @@
 
   /* boot */
   applyI18n();
+  loadMusic();
   paintVoice();
   renderList();
   renderHistory();
