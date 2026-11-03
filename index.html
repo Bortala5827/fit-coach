@@ -323,6 +323,8 @@
     .history { margin-top: 14px; }
     .tip { margin-top: 12px; }
     .level-row { margin-top: 10px; }
+    .btn-row { gap: 6px; margin-top: 2px; }
+    .btn-row .btn-ghost { padding: 8px 14px; }
   }
 
   /* tab bar visible on phones & touch devices; desktop keeps inline layout */
@@ -634,7 +636,8 @@
     <div class="quip" id="quip"></div>
     <div class="btn-row">
       <button id="btn">Start</button>
-      <button id="stopBtn" class="btn-ghost stop-btn hide" data-i18n="stop">Stop</button>
+      <button id="endBtn" class="btn-ghost hide" data-i18n="endBtn">End</button>
+      <button id="skipBtn" class="btn-ghost hide" data-i18n="skipBtn">Skip</button>
       <button id="voiceBtn" class="btn-ghost">Voice: on</button>
       <button id="backBtn" class="btn-ghost" data-i18n="back">Back</button>
     </div>
@@ -680,7 +683,7 @@
     <div class="about-card">
       <img class="about-logo" src="/logo.svg" alt="Fit Coach">
       <div class="about-name">Fit Coach</div>
-      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.3</div>
+      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.4</div>
     </div>
     <p class="tip"><span data-i18n="privacy1">No account. No tracking.</span><br><span data-i18n="privacy2">Your data stays on your device.</span></p>
     <p class="tip" data-i18n="disclaimer">General fitness guidance only. Not medical advice. Stop if you feel pain.</p>
@@ -726,6 +729,8 @@
       tagline: "Voice-guided workouts. Just press go.",
       start: "Start", stop: "Stop", again: "Go again",
       pause: "Pause", resume: "Resume", tenSecs: "Ten more seconds",
+      endBtn: "End", skipBtn: "Skip",
+      endedSummary: "Ended early · {n}/{m} cues{d}",
       voiceOn: "Voice: on", voiceOff: "Voice: off",
       back: "Back", ready: "Ready", done: "Done", rest: "Rest",
       level0: "Light", level1: "Standard", level2: "Hard",
@@ -778,7 +783,7 @@
       statStreak: "day streak", statTotal: "days trained in total", statWeek: "Last 7 days",
       sessionTotal: "sessions completed",
       streakLabel: "Streak: {d} days",
-      aboutVer: "Voice-guided workouts · v1.3",
+      aboutVer: "Voice-guided workouts · v1.4",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
@@ -809,6 +814,8 @@
       tagline: "音声ガイド付きトレーニング。押すだけ。",
       start: "スタート", stop: "ストップ", again: "もう一回",
       pause: "一時停止", resume: "再開", tenSecs: "残り10秒",
+      endBtn: "終了", skipBtn: "スキップ",
+      endedSummary: "途中終了 · {n}/{m} ステップ{d}",
       voiceOn: "音声: オン", voiceOff: "音声: オフ",
       back: "戻る", ready: "準備", done: "完了", rest: "休憩",
       level0: "ライト", level1: "標準", level2: "ハード",
@@ -861,7 +868,7 @@
       statStreak: "日連続", statTotal: "累計トレーニング日数", statWeek: "過去7日間",
       sessionTotal: "完了セッション",
       streakLabel: "連続 {d} 日",
-      aboutVer: "音声ガイド付きトレーニング · v1.3",
+      aboutVer: "音声ガイド付きトレーニング · v1.4",
       privacy1: "アカウント不要。トラッキングなし。",
       privacy2: "データは端末から出ません。",
       disclaimer: "一般的なフィットネス案内です。医療アドバイスではありません。痛みを感じたら中止してください。",
@@ -892,6 +899,8 @@
       tagline: "語音帶你運動，按下就開始。",
       start: "開始", stop: "停止", again: "再來一次",
       pause: "暫停", resume: "繼續", tenSecs: "還有十秒",
+      endBtn: "結束", skipBtn: "略過",
+      endedSummary: "提前結束 · {n}/{m} 個口令{d}",
       voiceOn: "語音：開", voiceOff: "語音：關",
       back: "返回", ready: "預備", done: "完成", rest: "休息",
       level0: "輕鬆", level1: "標準", level2: "加強",
@@ -944,7 +953,7 @@
       statStreak: "天連續", statTotal: "累計訓練天數", statWeek: "最近 7 天",
       sessionTotal: "完成訓練次數",
       streakLabel: "連續 {d} 天",
-      aboutVer: "語音帶練運動 · v1.3",
+      aboutVer: "語音帶練運動 · v1.4",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
@@ -1215,7 +1224,7 @@
         var isFoot = (i % 5 === 4);
         steps.push(S(isFoot ? T("footwork") : T(ck + "t"), isFoot ? T("footworkSay") : T(ck + "s"), 5, i % 2 === 0 ? "contract" : "release", T("round", { n: round }), "punch"));
       }
-      steps.push(S(T("round", { n: round }), T("finishRound"), 5, "contract", T("round", { n: round }), "punch"));
+      steps.push(S(T("round", { n: round }), T("finishRound"), 10, "contract", T("round", { n: round }), "punch"));
     }
     return steps;
   }
@@ -1245,7 +1254,7 @@
         steps.push(S(T(mk + "t"), say, 30, i % 2 === 0 ? "contract" : "release", T("moveSub", { i: i + 1, n: count }), SEVEN_DEMOS[i]));
         if (rd === rounds && i === count - 1) { break; }
         var nxt = (i < count - 1) ? T("m" + (i + 2) + "t") : T("m1t");
-        steps.push(S(T("rest"), T("rest"), 10, "idle", T("next", { x: nxt })));
+        steps.push(S(T("rest"), T("rest"), 10, "idle", T("next", { x: nxt }), SEVEN_DEMOS[(i + 1) % count]));
       }
     }
     steps.push(S(T("done"), T("greatJob") + " " + T("q3s"), 3, "idle", ""));
@@ -1325,10 +1334,11 @@
     paintVoice();
     renderHistory();
     if (current && !timer) {
-      btn.textContent = T(progressEl.style.width === "100%" ? "again" : "start");
+      btn.textContent = T(ended ? "again" : "start");
       stepSubEl.textContent = current.id === "tabata" ? T("setTimer") : T("cuesInfo", { name: T(current.nameKey), n: steps.length });
       if (current.id !== "tabata" && ball.className === "ball idle") { look("idle", T("ready")); }
-    }
+    } else if (paused) { btn.textContent = T("resume"); }
+    else if (timer) { btn.textContent = T("pause"); }
   });
 
   /* ---------- session engine ---------- */
@@ -1345,8 +1355,11 @@
   var progressEl = document.getElementById("progress");
   var stepSubEl = document.getElementById("stepSub");
   var btn = document.getElementById("btn");
-  var stopBtn = document.getElementById("stopBtn");
+  var endBtn = document.getElementById("endBtn");
+  var skipBtn = document.getElementById("skipBtn");
   var backBtn = document.getElementById("backBtn");
+  function showRunCtrls() { endBtn.classList.remove("hide"); skipBtn.classList.remove("hide"); }
+  function hideRunCtrls() { endBtn.classList.add("hide"); skipBtn.classList.add("hide"); }
   var levelRow = document.getElementById("levelRow");
   var setupPanel = document.getElementById("setupPanel");
 
@@ -1415,7 +1428,7 @@
   paintLevel();
 
   var steps = [], idx = -1, remaining = 0, timer = null, current = null;
-  var warned = false, lastWhole = null, paused = false, deadline = 0;
+  var warned = false, lastWhole = null, paused = false, deadline = 0, ended = false;
 
   function look(cls, label) {
     ball.className = "ball " + cls;
@@ -1435,6 +1448,15 @@
   }
 
   function openWorkout(w) {
+    if (timer || paused) {
+      stopTimer();
+      paused = false;
+      releaseWake();
+      stopAudioSession();
+      try { speechSynthesis.cancel(); } catch (e) {}
+    }
+    hideRunCtrls();
+    ended = false;
     steps = w.build ? w.build() : [];
     idx = -1;
     current = w;
@@ -1456,6 +1478,7 @@
   function goHome(push) {
     if (timer) { clearInterval(timer); timer = null; }
     paused = false;
+    hideRunCtrls();
     releaseWake();
     stopAudioSession();
     try { speechSynthesis.cancel(); } catch (e) {}
@@ -1509,10 +1532,14 @@
 
   function start() {
     paused = false;
+    ended = false;
+    idx = -1;                 /* critical: replay must start from the first cue */
+    progressEl.style.width = "0%";
+    document.getElementById("quip").classList.remove("show");
     unlockSpeech();
     startAudioSession();
-    btn.textContent = T("stop");
-    stopBtn.classList.remove("hide");
+    btn.textContent = T("pause");
+    showRunCtrls();
     if (current.id === "tabata") {
       var clamp = function (v, lo, hi, dflt) {
         v = parseInt(v, 10);
@@ -1546,18 +1573,20 @@
     if (timer) { clearInterval(timer); timer = null; }
   }
 
+  /* End early: keep the session in the log instead of throwing it away */
   function stop() {
-    stopTimer();
-    paused = false;
-    releaseWake();
-    stopAudioSession();
+    finish(true);
+  }
+
+  /* Skip the current cue — e.g. no chair for step-ups, or a hold you can't finish */
+  function skip() {
+    if (!timer && !paused) { return; }
     try { speechSynthesis.cancel(); } catch (e) {}
-    stopBtn.classList.add("hide");
-    look("idle", T("ready"));
-    countEl.textContent = "";
-    btn.textContent = T("start");
-    if (current && current.id === "tabata") { setupPanel.classList.add("show"); }
-    else { levelRow.classList.remove("hide"); }
+    if (idx + 1 >= steps.length) { finish(false); return; }
+    playStep(idx + 1);
+    remaining = steps[idx].secs;
+    deadline = Date.now() + remaining * 1000;
+    if (paused) { try { speechSynthesis.cancel(); } catch (e) {} }
   }
 
   var QUIPS = ["q1", "q2", "q3", "q4", "q5"];
@@ -1580,29 +1609,43 @@
     }
   }
 
-  function finish() {
+  function finish(early) {
     stopTimer();
     paused = false;
+    ended = true;
     releaseWake();
     stopAudioSession();
-    stopBtn.classList.add("hide");
+    hideRunCtrls();
+    try { speechSynthesis.cancel(); } catch (e) {}
     look("idle", T("done"));
     countEl.textContent = "";
-    progressEl.style.width = "100%";
+    var doneN = Math.max(idx + 1, 0);
+    if (early) {
+      progressEl.style.width = Math.min(100, Math.round(doneN / steps.length * 100)) + "%";
+    } else {
+      progressEl.style.width = "100%";
+    }
     btn.textContent = T("again");
     if (current.id !== "tabata") { levelRow.classList.remove("hide"); }
+    else { setupPanel.classList.add("show"); }
     saveToday(current.id);
-    var totalSecs = 0;
-    for (var i = 0; i < steps.length; i++) { totalSecs += steps[i].secs; }
-    var mins = Math.max(1, Math.round(totalSecs / 60));
     var hist = calcHistory();
     renderHistory();
     var streakTxt = hist.streak > 0 ? T("streakLabel", { d: hist.streak }) : "";
+    var quip = document.getElementById("quip");
+    quip.textContent = "";
+    quip.classList.remove("show");
+    if (early) {
+      stepSubEl.textContent = T("endedSummary", { n: doneN, m: steps.length, d: streakTxt ? " · " + streakTxt : "" });
+      beep(true);
+      return;
+    }
+    var totalSecs = 0;
+    for (var i = 0; i < steps.length; i++) { totalSecs += steps[i].secs; }
+    var mins = Math.max(1, Math.round(totalSecs / 60));
     stepSubEl.textContent = T("finishSummary", { name: T(current.nameKey), n: steps.length, m: mins, d: streakTxt });
     var qk = QUIPS[Math.floor(Math.random() * QUIPS.length)];
-    var quip = document.getElementById("quip");
     quip.textContent = T(qk);
-    quip.classList.remove("show");
     void quip.offsetWidth;
     quip.classList.add("show");
     speak(T("greatJob") + " " + T(qk + "s"));
@@ -1621,7 +1664,7 @@
 
   function resumeRun() {
     paused = false;
-    btn.textContent = T("stop");
+    btn.textContent = T("pause");
     deadline = Date.now() + remaining * 1000;
     setMediaState("playing");
     playKeepAlive();
@@ -1633,8 +1676,12 @@
     else if (paused) { resumeRun(); }
     else { start(); }
   });
-  stopBtn.addEventListener("click", function () { stop(); });
-  backBtn.addEventListener("click", function () { goHome(); });
+  endBtn.addEventListener("click", function () { stop(); });
+  skipBtn.addEventListener("click", function () { skip(); });
+  backBtn.addEventListener("click", function () {
+    if (!ended && (timer || paused)) { finish(true); }
+    goHome();
+  });
 
   /* ---------- history ---------- */
   function dateKey(d) {
@@ -1711,7 +1758,11 @@
   window.addEventListener("popstate", function () { route(); });
   function route() {
     var seg = location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
-    if (!seg) { goHome(false); return; }
+    if (!seg) {
+      if (!ended && (timer || paused)) { finish(true); }
+      goHome(false);
+      return;
+    }
     for (var i = 0; i < WORKOUTS.length; i++) {
       if (WORKOUTS[i].id === seg) { openWorkout(WORKOUTS[i]); return; }
     }
