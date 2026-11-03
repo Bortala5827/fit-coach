@@ -1,4 +1,4 @@
-const CACHE = "fitcoach-v3";
+const CACHE = "fitcoach-v4";
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
