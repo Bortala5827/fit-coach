@@ -683,6 +683,7 @@
       <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.3</div>
     </div>
     <p class="tip"><span data-i18n="privacy1">No account. No tracking.</span><br><span data-i18n="privacy2">Your data stays on your device.</span></p>
+    <p class="tip" data-i18n="disclaimer">General fitness guidance only. Not medical advice. Stop if you feel pain.</p>
     <button class="btn-ghost install-btn js-install" data-i18n="install">Install app</button>
     <p class="tip"><a href="https://github.com/Bortala5827/fit-coach" target="_blank" rel="noopener" data-i18n="oss">Open source on GitHub</a></p>
   </div>
@@ -780,6 +781,7 @@
       aboutVer: "Voice-guided workouts · v1.3",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
+      disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
       install: "Install app",
       oss: "Open source on GitHub",
       repSub: "Rep {r}/{rn} · Set {s}/{sn}",
@@ -862,6 +864,7 @@
       aboutVer: "音声ガイド付きトレーニング · v1.3",
       privacy1: "アカウント不要。トラッキングなし。",
       privacy2: "データは端末から出ません。",
+      disclaimer: "一般的なフィットネス案内です。医療アドバイスではありません。痛みを感じたら中止してください。",
       install: "アプリを追加",
       oss: "GitHub でオープンソース",
       repSub: "{r}/{rn} 回 · セット {s}/{sn}",
@@ -944,6 +947,7 @@
       aboutVer: "語音帶練運動 · v1.3",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
+      disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
       install: "安裝 App",
       oss: "GitHub 開放原始碼",
       repSub: "第 {r}/{rn} 下 · 第 {s}/{sn} 組",
@@ -1074,6 +1078,73 @@
     } catch (e) {}
   }
 
+  /* audio session: silent keep-alive loop (iOS speech) + lock-screen/headset controls */
+  var keepAlive = null;
+  function makeSilenceURL() {
+    try {
+      var rate = 8000, len = rate, buf = new ArrayBuffer(44 + len * 2), v = new DataView(buf);
+      function str(o, s) { for (var i = 0; i < s.length; i++) { v.setUint8(o + i, s.charCodeAt(i)); } }
+      str(0, "RIFF"); v.setUint32(4, 36 + len * 2, true); str(8, "WAVE"); str(12, "fmt ");
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+      v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+      str(36, "data"); v.setUint32(40, len * 2, true);
+      return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+    } catch (e) { return ""; }
+  }
+  function playKeepAlive() {
+    try {
+      if (!keepAlive) {
+        keepAlive = new Audio();
+        keepAlive.src = makeSilenceURL();
+        keepAlive.loop = true;
+        keepAlive.preload = "auto";
+        keepAlive.setAttribute("playsinline", "");
+      }
+      var p = keepAlive.play();
+      if (p && p.catch) { p.catch(function () {}); }
+    } catch (e) {}
+  }
+  function setMediaMeta() {
+    try {
+      if (!("mediaSession" in navigator) || !window.MediaMetadata) { return; }
+      var st = steps[idx];
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: (current ? T(current.nameKey) : "Fit Coach") + (st ? " · " + st.label : ""),
+        artist: "Fit Coach", album: "Guided workout"
+      });
+    } catch (e) {}
+  }
+  function setMediaState(s) {
+    try { if ("mediaSession" in navigator) { navigator.mediaSession.playbackState = s; } } catch (e) {}
+  }
+  function startAudioSession() {
+    playKeepAlive();
+    setMediaMeta();
+    setMediaState("playing");
+    try {
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.setActionHandler("play", function () { if (paused) { resumeRun(); } });
+        navigator.mediaSession.setActionHandler("pause", function () { if (timer) { pause(); } });
+        navigator.mediaSession.setActionHandler("stop", function () { if (timer || paused) { stop(); } });
+      }
+    } catch (e) {}
+  }
+  function stopAudioSession() {
+    if (keepAlive) { try { keepAlive.pause(); } catch (e) {} }
+    setMediaState("none");
+  }
+
+  /* iOS WebKit: first speak() must be unlocked inside a user gesture */
+  function unlockSpeech() {
+    try { speechSynthesis.getVoices(); } catch (e) {}
+    try {
+      var u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
   /* keep screen awake while training */
   var wakeLock = null;
   function requestWake() {
@@ -1087,7 +1158,15 @@
     if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
   }
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && timer) { requestWake(); }
+    if (document.visibilityState === "visible" && timer) {
+      requestWake();
+      playKeepAlive();
+      if (voiceOn) {
+        try { speechSynthesis.cancel(); } catch (e) {}
+        var st = steps[idx];
+        speak(st ? st.say : T("getReady"));
+      }
+    }
   });
 
   /* ---------- step builders (level-aware: 0 light / 1 standard / 2 hard) ---------- */
@@ -1336,7 +1415,7 @@
   paintLevel();
 
   var steps = [], idx = -1, remaining = 0, timer = null, current = null;
-  var warned = false, lastWhole = null, paused = false;
+  var warned = false, lastWhole = null, paused = false, deadline = 0;
 
   function look(cls, label) {
     ball.className = "ball " + cls;
@@ -1378,6 +1457,7 @@
     if (timer) { clearInterval(timer); timer = null; }
     paused = false;
     releaseWake();
+    stopAudioSession();
     try { speechSynthesis.cancel(); } catch (e) {}
     if (push !== false) { try { history.pushState(null, "", "/"); } catch (e) {} }
     showScreen(homeEl);
@@ -1401,6 +1481,8 @@
     speak(st.say);
     vibrate(st.cls === "contract" ? 60 : 30);
     remaining = st.secs;
+    deadline = Date.now() + st.secs * 1000;
+    setMediaMeta();
     progressEl.style.width = Math.round((i + 1) / steps.length * 100) + "%";
   }
 
@@ -1410,7 +1492,8 @@
   }
 
   function tick() {
-    remaining -= TICK / 1000;
+    /* wall-clock deadline: survives iOS background timer freeze */
+    remaining = (deadline - Date.now()) / 1000;
     if (remaining <= 0) { nextStep(); return; }
     var whole = Math.ceil(remaining);
     if (whole !== lastWhole) {
@@ -1426,6 +1509,8 @@
 
   function start() {
     paused = false;
+    unlockSpeech();
+    startAudioSession();
     btn.textContent = T("stop");
     stopBtn.classList.remove("hide");
     if (current.id === "tabata") {
@@ -1453,6 +1538,7 @@
     countEl.textContent = "";
     demoEl.className = "demo";
     remaining = 1.4;
+    deadline = Date.now() + 1400;
     timer = setInterval(tick, TICK);
   }
 
@@ -1464,6 +1550,7 @@
     stopTimer();
     paused = false;
     releaseWake();
+    stopAudioSession();
     try { speechSynthesis.cancel(); } catch (e) {}
     stopBtn.classList.add("hide");
     look("idle", T("ready"));
@@ -1497,6 +1584,7 @@
     stopTimer();
     paused = false;
     releaseWake();
+    stopAudioSession();
     stopBtn.classList.add("hide");
     look("idle", T("done"));
     countEl.textContent = "";
@@ -1523,15 +1611,20 @@
   }
 
   function pause() {
+    remaining = (deadline - Date.now()) / 1000;
     stopTimer();
     paused = true;
     btn.textContent = T("resume");
+    setMediaState("paused");
     try { speechSynthesis.cancel(); } catch (e) {}
   }
 
   function resumeRun() {
     paused = false;
     btn.textContent = T("stop");
+    deadline = Date.now() + remaining * 1000;
+    setMediaState("playing");
+    playKeepAlive();
     timer = setInterval(tick, TICK);
   }
 
