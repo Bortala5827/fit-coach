@@ -251,6 +251,42 @@
 
   .tip { margin-top: 20px; font-size: 12px; color: #8a7f70; line-height: 1.8; }
 
+  /* session top bar: only navigation + one secondary control */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .top-btn { padding: 7px 15px; min-height: 38px; font-size: 13px; }
+
+  /* form cue strip: technique / safety reminder shown during the whole set */
+  .cue {
+    display: none;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #fffaf2;
+    border: 1px solid #e8dfd0;
+    border-radius: 14px;
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #6f6558;
+  }
+  .cue.show { display: flex; }
+  .cue-tag { flex: none; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #c9805e; padding-top: 2px; }
+  .cue-text { flex: 1; }
+
+  /* secondary controls: collapsed by default, one tap to expand */
+  .more-panel {
+    display: none;
+    margin-top: 14px;
+    padding: 16px;
+    background: #fffaf2;
+    border: 1px solid #e8dfd0;
+    border-radius: 20px;
+  }
+  .more-panel.show { display: block; }
+  .more-panel .level-row { margin: 0 0 14px; }
+  .more-panel .btn-ghost { width: 100%; }
+
   /* stats & about screens */
   .scr-title { font-size: 20px; font-weight: 700; letter-spacing: 2px; margin-top: 8px; }
   .stat-grid { margin-top: 18px; display: grid; gap: 10px; }
@@ -317,9 +353,10 @@
   @media (max-height: 680px) {
     .list { margin-top: 14px; gap: 8px; }
     .ex { padding: 12px 16px; }
-    .demo { height: 118px; margin-top: 10px; }
-    #demoSvg { width: 92px; height: 92px; }
+    .demo { height: 108px; margin-top: 10px; }
+    #demoSvg { width: 86px; height: 86px; }
     .step-sub { margin-top: 6px; }
+    .cue { margin-top: 6px; padding: 7px 11px; font-size: 11px; line-height: 1.45; }
     .history { margin-top: 14px; }
     .tip { margin-top: 12px; }
     .level-row { margin-top: 10px; }
@@ -353,6 +390,10 @@
 
   <!-- SESSION -->
   <div class="screen" id="session">
+    <div class="topbar">
+      <button id="backBtn" class="btn-ghost top-btn" data-i18n="back">Back</button>
+      <button id="moreBtn" class="btn-ghost top-btn" data-i18n="options">Options</button>
+    </div>
     <div class="ring-wrap">
       <div class="halo" id="halo"></div>
       <div class="ball" id="ball">
@@ -633,18 +674,19 @@
     </div>
     <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
     <div class="step-sub" id="stepSub"></div>
+    <div class="cue" id="cue"><span class="cue-tag" id="cueTag">FORM</span><span class="cue-text" id="cueText"></span></div>
     <div class="quip" id="quip"></div>
     <div class="btn-row">
       <button id="btn">Start</button>
-      <button id="endBtn" class="btn-ghost hide" data-i18n="endBtn">End</button>
       <button id="skipBtn" class="btn-ghost hide" data-i18n="skipBtn">Skip</button>
-      <button id="voiceBtn" class="btn-ghost">Voice: on</button>
-      <button id="backBtn" class="btn-ghost" data-i18n="back">Back</button>
     </div>
-    <div class="level-row" id="levelRow">
-      <button class="lvl" data-lv="0" data-i18n="level0">Light</button>
-      <button class="lvl" data-lv="1" data-i18n="level1">Standard</button>
-      <button class="lvl" data-lv="2" data-i18n="level2">Hard</button>
+    <div class="more-panel" id="morePanel">
+      <div class="level-row" id="levelRow">
+        <button class="lvl" data-lv="0" data-i18n="level0">Light</button>
+        <button class="lvl" data-lv="1" data-i18n="level1">Standard</button>
+        <button class="lvl" data-lv="2" data-i18n="level2">Hard</button>
+      </div>
+      <button id="voiceBtn" class="btn-ghost">Voice: on</button>
     </div>
     <div class="setup" id="setupPanel">
       <label><span data-i18n="cfgWork">Work</span> <input id="cfgWork" type="number" min="5" max="300" value="20">s</label>
@@ -683,7 +725,7 @@
     <div class="about-card">
       <img class="about-logo" src="/logo.svg" alt="Fit Coach">
       <div class="about-name">Fit Coach</div>
-      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.4</div>
+      <div class="about-ver" data-i18n="aboutVer">Voice-guided workouts · v1.5</div>
     </div>
     <p class="tip"><span data-i18n="privacy1">No account. No tracking.</span><br><span data-i18n="privacy2">Your data stays on your device.</span></p>
     <p class="tip" data-i18n="disclaimer">General fitness guidance only. Not medical advice. Stop if you feel pain.</p>
@@ -733,6 +775,7 @@
       endedSummary: "Ended early · {n}/{m} cues{d}",
       voiceOn: "Voice: on", voiceOff: "Voice: off",
       back: "Back", ready: "Ready", done: "Done", rest: "Rest",
+      options: "Options", formTag: "FORM", noteTag: "NOTE",
       level0: "Light", level1: "Standard", level2: "Hard",
       cuesInfo: "{name} · {n} cues",
       finishSummary: "{name} · {n} cues · about {m} min · {d}",
@@ -783,7 +826,7 @@
       statStreak: "day streak", statTotal: "days trained in total", statWeek: "Last 7 days",
       sessionTotal: "sessions completed",
       streakLabel: "Streak: {d} days",
-      aboutVer: "Voice-guided workouts · v1.4",
+      aboutVer: "Voice-guided workouts · v1.5",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
@@ -818,6 +861,7 @@
       endedSummary: "途中終了 · {n}/{m} ステップ{d}",
       voiceOn: "音声: オン", voiceOff: "音声: オフ",
       back: "戻る", ready: "準備", done: "完了", rest: "休憩",
+      options: "設定", formTag: "フォーム", noteTag: "注意",
       level0: "ライト", level1: "標準", level2: "ハード",
       cuesInfo: "{name} · {n} ステップ",
       finishSummary: "{name} · {n} ステップ · 約 {m} 分 · {d}",
@@ -868,7 +912,7 @@
       statStreak: "日連続", statTotal: "累計トレーニング日数", statWeek: "過去7日間",
       sessionTotal: "完了セッション",
       streakLabel: "連続 {d} 日",
-      aboutVer: "音声ガイド付きトレーニング · v1.4",
+      aboutVer: "音声ガイド付きトレーニング · v1.5",
       privacy1: "アカウント不要。トラッキングなし。",
       privacy2: "データは端末から出ません。",
       disclaimer: "一般的なフィットネス案内です。医療アドバイスではありません。痛みを感じたら中止してください。",
@@ -903,6 +947,7 @@
       endedSummary: "提前結束 · {n}/{m} 個口令{d}",
       voiceOn: "語音：開", voiceOff: "語音：關",
       back: "返回", ready: "預備", done: "完成", rest: "休息",
+      options: "選項", formTag: "動作要領", noteTag: "注意",
       level0: "輕鬆", level1: "標準", level2: "加強",
       cuesInfo: "{name} · {n} 個口令",
       finishSummary: "{name} · {n} 個口令 · 約 {m} 分鐘 · {d}",
@@ -953,7 +998,7 @@
       statStreak: "天連續", statTotal: "累計訓練天數", statWeek: "最近 7 天",
       sessionTotal: "完成訓練次數",
       streakLabel: "連續 {d} 天",
-      aboutVer: "語音帶練運動 · v1.4",
+      aboutVer: "語音帶練運動 · v1.5",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
@@ -982,6 +1027,179 @@
     }
   };
 
+  /* ---------- form cues (evidence-based, per language) ----------
+     Sources: ACE exercise technique guides (squat / push-up / plank / lunge),
+     Harvard Health "8 tips for safe and effective strength training"
+     (exhale on effort, never hold breath, no locked joints, stop on pain),
+     NSCA "Developing the Core" (continuous brace + free breathing),
+     NHS male pelvic floor leaflets (isolate, no glutes/abs/breath-holding, full release),
+     Klika & Jordan 2013, ACSM Health & Fitness Journal (7-min HICT: 12 moves, 30/10s, RPE 8).
+     tips[0] is shown during every work cue; tips[1..] rotate on rest cues. */
+  var FORM = {
+    en: {
+      general: {
+        brief: "Whatever the move: breathe out on effort, keep knees and elbows soft, and stop if you feel pain.",
+        tips: ["Exhale on the hard part, never hold your breath", "Keep joints soft — never lock knees or elbows", "Form first. Slow down before technique breaks", "Stop right away if you feel pain, not just effort"]
+      },
+      kegel: {
+        brief: "Lift the pelvic floor only. Glutes, thighs and belly stay soft, breathe normally, and fully relax after each squeeze.",
+        tips: ["Only the pelvic floor moves — glutes, thighs and belly stay soft", "Keep breathing. Never hold your breath", "Relax completely between reps — the release matters as much as the squeeze", "One clean set beats three rushed ones. Stop if it hurts"]
+      },
+      pushups: {
+        brief: "Hands slightly wider than shoulders. Keep the body in one line, lower until elbows reach about 90 degrees, then press up.",
+        tips: ["Body in one line, core braced, hips level", "Exhale as you press up — never hold your breath", "Elbows about 90 degrees, not flared; don't lock them at the top", "Stop if shoulders or wrists hurt; knee push-ups are fine"]
+      },
+      squats: {
+        brief: "Feet shoulder-width, toes slightly out. Sit the hips back, chest up, knees tracking over your toes, then drive through the whole foot.",
+        tips: ["Chest up, knees tracking over toes, heels down", "Exhale as you stand. Never hold your breath", "Only go as deep as you can control — no collapsing at the bottom", "Keep knees soft at the top, never snap them locked"]
+      },
+      situps: {
+        brief: "Lower back pressed to the floor. Curl up with your abs, not by pulling your neck, and lower slowly.",
+        tips: ["Curl with the abs — don't pull on your neck", "Exhale on the way up, breathe in on the way down", "Lower back stays on the floor; small controlled range", "No momentum. Stop if your lower back aches"]
+      },
+      boxing: {
+        brief: "Hands up by your chin, elbows in. Punch from the hips with a sharp exhale, and bring every hand straight back to guard.",
+        tips: ["Hands return to your face after every punch", "Exhale sharply on each punch — never hold your breath", "Rotate the hip, stay light on your feet, don't arm-punch", "Chin tucked, wrists straight; stop if a shoulder stings"]
+      },
+      plank: {
+        brief: "Elbows under shoulders, body in a straight line. Brace the core and breathe steadily the whole time — never hold your breath.",
+        tips: ["Hips level — no sagging, no pike; core braced", "Breathe continuously while holding — no breath holding", "Glutes and quads gently tight, shoulders away from ears", "Stop if your lower back aches; drop to your knees instead"]
+      },
+      calves: {
+        brief: "Rise onto the balls of your feet, pause one second at the top, then lower the heels slowly through the full range.",
+        tips: ["Full range — slow on the way down, pause at the top", "Keep breathing; don't hold your breath on the hold", "Knees soft, never locked; weight over the big toe", "Don't bounce at the bottom — stop if the Achilles hurts"]
+      },
+      seven: {
+        brief: "Twelve moves, 30 seconds each, 10 seconds rest. Aim for about 8 out of 10 effort — but form beats speed. A chair and a wall are enough.",
+        moves: [
+          "Land softly with bent knees; keep a steady rhythm",
+          "Thighs parallel, knees over ankles, back flat to the wall",
+          "Body in one line, elbows about 90 degrees",
+          "Lower back down, curl with the abs, don't pull the neck",
+          "Push through the whole foot, knee over ankle; use a sturdy chair",
+          "Sit the hips back, chest up, knees over toes",
+          "Elbows close to the body, shoulders down, don't sink too low",
+          "Brace the core, hips level, keep breathing",
+          "Land softly, pump the arms, keep the core tight",
+          "Front knee over the ankle, torso upright",
+          "Keep the hips level, rotate from the torso, don't twist the knees",
+          "Stack the feet, lift the hips, breathe steadily"
+        ]
+      }
+    },
+    ja: {
+      general: {
+        brief: "どの動きでも、力を出すときに吐き、膝と肘は軽く曲げ、痛みが出たらすぐ止めましょう。",
+        tips: ["力を出すときに吐く。息を止めない", "膝・肘は伸ばしきらず、軽く曲げておく", "フォーム優先。崩れたらペースを落とす", "痛みを感じたらすぐ中止。きつさとは違います"]
+      },
+      kegel: {
+        brief: "骨盤底筋だけを引き上げます。お尻・太もも・お腹は力を抜き、普通に呼吸し、毎回しっかり緩めてください。",
+        tips: ["動かすのは骨盤底筋だけ。お尻・太もも・お腹は緩める", "呼吸を続ける。息を止めない", "毎回完全に緩める。緩めることもトレーニング", "質が量より大事。痛みがあれば中止"]
+      },
+      pushups: {
+        brief: "手は肩よりやや広め。体を一直線に保ち、肘が約90度になるまで下ろして押し上げます。",
+        tips: ["体は一直線、体幹に力を、腰は水平", "押し上げで吐く。息を止めない", "肘は約90度、横に開かない。上で伸ばしきらない", "肩や手首が痛ければ中止。膝つきでもOK"]
+      },
+      squats: {
+        brief: "足は肩幅、つま先は少し外へ。お尻を後ろに引き、胸を張り、膝をつま先の方向に保って立ち上がります。",
+        tips: ["胸を張り、膝はつま先方向、かかとを床に", "立ち上がりで吐く。息を止めない", "コントロールできる深さまで。底で潰れない", "上で膝を伸ばしきらず、軽く保つ"]
+      },
+      situps: {
+        brief: "腰を床につけたまま、首を引っ張らずお腹で上体を丸め、ゆっくり戻します。",
+        tips: ["お腹で丸める。首を引っ張らない", "起き上がりで吐き、戻りで吸う", "腰は床につけたまま。小さく丁寧な可動域", "反動を使わない。腰が痛ければ中止"]
+      },
+      boxing: {
+        brief: "手は顎の横、肘は内側。腰の回転で打ち、鋭く吐いて、毎回すぐガードに戻します。",
+        tips: ["毎打、手をすぐ顔に戻す", "打つたび鋭く吐く。息を止めない", "腰を回し、足を軽く動かす。腕だけでは打たない", "顎を引き、手首はまっすぐ。肩に痛みが出たら中止"]
+      },
+      plank: {
+        brief: "肘は肩の真下、体は一直線。体幹に力を入れたまま、ずっと普通に呼吸します。",
+        tips: ["腰は水平。落とさず、突き上げず、体幹を固める", "キープ中も呼吸を続ける。息を止めない", "お尻と太ももは軽く締め、肩は耳から遠ざける", "腰が痛ければ中止。膝をつけてもOK"]
+      },
+      calves: {
+        brief: "つま先立ちで上がり、頂点で1秒止め、かかとをゆっくり全可動域で下ろします。",
+        tips: ["全可動域。ゆっくり下ろし、頂点で1秒止める", "呼吸を続ける。止めたまま息を止めない", "膝は軽く曲げ、親指の付け根に体重を", "下で反動をつけない。アキレス腱が痛ければ中止"]
+      },
+      seven: {
+        brief: "12種目、各30秒、休憩10秒。きつさは10段階中8くらい。ただしスピードよりフォーム。椅子と壁があれば十分です。",
+        moves: [
+          "膝を曲げて柔らかく着地。リズムを一定に",
+          "太ももは床と平行、膝は足首の上、背中は壁に",
+          "体は一直線、肘は約90度",
+          "腰を床に、お腹で丸め、首を引っ張らない",
+          "足裏全体で踏み、膝は足首の上。安定した椅子を",
+          "お尻を後ろへ、胸を張り、膝はつま先方向",
+          "肘は体に近づけ、肩を下げ、沈みすぎない",
+          "体幹を固め、腰は水平、呼吸を続ける",
+          "柔らかく着地、腕を振り、体幹をキープ",
+          "前膝は足首の上、上体はまっすぐ",
+          "腰は水平、体から回す。膝をひねらない",
+          "足を重ね、腰を持ち上げ、呼吸を続ける"
+        ]
+      }
+    },
+    zh: {
+      general: {
+        brief: "不管做哪個動作：出力時吐氣、膝蓋手肘保持微彎，感到疼痛就立刻停下。",
+        tips: ["出力時吐氣，千萬別憋氣", "關節別鎖死，膝蓋手肘保持微彎", "姿勢優先，動作變形就先放慢", "感覺到痛就停，不是痠，是痛"]
+      },
+      kegel: {
+        brief: "只收骨盆底肌。臀部、大腿、腹部放鬆，正常呼吸，每次收緊後都要完全放掉。",
+        tips: ["只有骨盆底肌在動，臀、腿、肚子都要放軟", "保持呼吸，別憋氣", "每次之間完全放鬆，放鬆和收緊一樣重要", "一組做標準，勝過三組草率。痛就停"]
+      },
+      pushups: {
+        brief: "雙手略比肩寬，身體保持一直線，手肘彎到約 90 度再撐起。",
+        tips: ["身體一直線、核心收緊、腰部不塌", "撐起時吐氣，不要憋氣", "手肘約 90 度別外張，頂端也別鎖死", "肩或手腕痛就停；跪姿伏地挺身也可以"]
+      },
+      squats: {
+        brief: "雙腳與肩同寬、腳尖微開，臀部往後坐、胸口朝前，膝蓋對齊腳尖，用全腳掌站起。",
+        tips: ["挺胸、膝蓋對齊腳尖、腳跟不離地", "站起時吐氣，別憋氣", "蹲到自己能控制的深度，別在底部塌陷", "站直時膝蓋保持微彎，別猛然鎖死"]
+      },
+      situps: {
+        brief: "下背貼地，用腹部把上身捲起，不要拉脖子，再慢慢躺回。",
+        tips: ["用腹部捲起，別用手拉脖子", "起身吐氣，躺下吸氣", "下背貼地，動作小而確實", "不靠甩動借力；腰痠痛就停"]
+      },
+      boxing: {
+        brief: "雙手護在下巴旁、手肘內收，用轉髖帶拳、出拳短促吐氣，每一拳都立刻收回護臉。",
+        tips: ["每一拳打完，手立刻回到臉旁", "出拳時短促吐氣，別憋氣", "轉髖、腳步保持輕活，別只用手臂推", "下巴內收、手腕打直；肩刺痛就停"]
+      },
+      plank: {
+        brief: "手肘在肩膀正下方，身體成一直線。核心持續收緊，全程正常呼吸，絕不憋氣。",
+        tips: ["腰部水平，不塌也不拱，核心持續收緊", "撐住時保持呼吸，別憋氣", "臀腿輕收，肩膀遠離耳朵", "下背痛就停，改成跪姿也行"]
+      },
+      calves: {
+        brief: "前腳掌踩穩把腳跟墊到最高，頂端停一秒，再慢慢把腳跟放到最低。",
+        tips: ["全幅度：慢慢下放、頂端停一秒", "保持呼吸，別在停留時憋氣", "膝蓋微彎不鎖死，重心放在大拇指球", "底部別彈震；阿基里斯腱痛就停"]
+      },
+      seven: {
+        brief: "12 個動作，每個 30 秒、休息 10 秒，強度大約八分。但姿勢比速度重要，一面牆加一張椅子就夠。",
+        moves: [
+          "膝蓋微彎輕落地，節奏保持穩定",
+          "大腿與地面平行、膝蓋在腳踝上方、背貼牆",
+          "身體一直線，手肘約 90 度",
+          "下背貼地，用腹部捲起，別拉脖子",
+          "全腳掌踩穩、膝蓋對齊腳踝，椅子要穩",
+          "臀部往後坐、挺胸、膝蓋對齊腳尖",
+          "手肘貼近身體、肩膀下沉，別沉太低",
+          "核心收緊、腰部水平、保持呼吸",
+          "輕落地、手臂帶動、核心別散",
+          "前膝在腳踝上方，上身保持直立",
+          "腰部水平，用軀幹旋轉，別扭膝蓋",
+          "雙腳疊起、把髖部頂高、呼吸穩定"
+        ]
+      }
+    }
+  };
+
+  function F() { return FORM[LANG] || FORM.en; }
+  function cueFor(id) { var f = F(); return f[id] || f.general; }
+  function briefOf(id) {
+    var f = F();
+    if (id === "7min" && f.seven) { return f.seven.brief; }
+    return cueFor(id).brief;
+  }
+  function cueJoin() { return LANG === "en" ? ". " : (LANG === "ja" ? "。" : "，"); }
+
   function T(key, vars) {
     var d = DICT[LANG] || DICT.en;
     var s = (d[key] !== undefined) ? d[key] : (DICT.en[key] !== undefined ? DICT.en[key] : key);
@@ -1001,17 +1219,22 @@
   }
 
   /* ---------- voice (per-language, zh prefers TW female) ---------- */
+  var moreMode = "panel";           /* "panel" before a run, "voice" while running */
   var voiceOn = (function () {
     try { return localStorage.getItem("fitcoach_voice") !== "off"; } catch (e) { return true; }
   })();
   var voiceBtn = document.getElementById("voiceBtn");
-  function paintVoice() { voiceBtn.textContent = voiceOn ? T("voiceOn") : T("voiceOff"); }
-  voiceBtn.addEventListener("click", function () {
+  function paintVoice() {
+    voiceBtn.textContent = voiceOn ? T("voiceOn") : T("voiceOff");
+    if (moreMode === "voice") { moreBtn.textContent = voiceOn ? T("voiceOn") : T("voiceOff"); }
+  }
+  function toggleVoice() {
     voiceOn = !voiceOn;
     paintVoice();
     try { localStorage.setItem("fitcoach_voice", voiceOn ? "on" : "off"); } catch (e) {}
     if (!voiceOn) { try { speechSynthesis.cancel(); } catch (e) {} }
-  });
+  }
+  voiceBtn.addEventListener("click", toggleVoice);
 
   var VOICES = [];
   function loadVoices() {
@@ -1173,7 +1396,11 @@
       if (voiceOn) {
         try { speechSynthesis.cancel(); } catch (e) {}
         var st = steps[idx];
-        speak(st ? st.say : T("getReady"));
+        if (!st) {
+          speak(cueBrief ? T("getReady") + cueJoin() + cueBrief : T("getReady"));
+        } else {
+          speak(st.say + (st.tip && st.tipTag === "note" && st.secs >= 8 ? cueJoin() + st.tip : ""));
+        }
       }
     }
   });
@@ -1246,15 +1473,21 @@
     var count = 12, rounds = 1;
     if (LV === 0) { count = 6; }
     if (LV === 2) { rounds = 2; }
-    steps.push(S(T("ready"), T("sevenIntro"), 5, "idle", count + (rounds > 1 ? " × " + rounds : "")));
+    var intro = S(T("ready"), T("sevenIntro"), 5, "idle", count + (rounds > 1 ? " × " + rounds : ""));
+    intro.isIntro = true;
+    steps.push(intro);
     for (var rd = 1; rd <= rounds; rd++) {
       for (var i = 0; i < count; i++) {
         var mk = "m" + (i + 1);
         var say = (rd > 1 ? T("roundTwo") : "") + T(mk + "s");
-        steps.push(S(T(mk + "t"), say, 30, i % 2 === 0 ? "contract" : "release", T("moveSub", { i: i + 1, n: count }), SEVEN_DEMOS[i]));
+        var work = S(T(mk + "t"), say, 30, i % 2 === 0 ? "contract" : "release", T("moveSub", { i: i + 1, n: count }), SEVEN_DEMOS[i]);
+        work.mk = i + 1;
+        steps.push(work);
         if (rd === rounds && i === count - 1) { break; }
         var nxt = (i < count - 1) ? T("m" + (i + 2) + "t") : T("m1t");
-        steps.push(S(T("rest"), T("rest"), 10, "idle", T("next", { x: nxt }), SEVEN_DEMOS[(i + 1) % count]));
+        var rest = S(T("rest"), T("rest"), 10, "idle", T("next", { x: nxt }), SEVEN_DEMOS[(i + 1) % count]);
+        rest.nextMk = (i < count - 1) ? i + 2 : 1;
+        steps.push(rest);
       }
     }
     steps.push(S(T("done"), T("greatJob") + " " + T("q3s"), 3, "idle", ""));
@@ -1263,7 +1496,9 @@
 
   function buildTabata(cfg) {
     var steps = [];
-    steps.push(S(T("ready"), T("tabataIntro", { name: cfg.name, work: cfg.work }), 5, "idle", cfg.rounds + " rounds"));
+    var intro = S(T("ready"), T("tabataIntro", { name: cfg.name, work: cfg.work }), 5, "idle", cfg.rounds + " rounds");
+    intro.isIntro = true;
+    steps.push(intro);
     for (var r = 1; r <= cfg.rounds; r++) {
       steps.push(S(cfg.name, T("tabataGoSay", { name: cfg.name }), cfg.work, "contract", T("round", { n: r }), "knees"));
       if (r < cfg.rounds) {
@@ -1293,6 +1528,28 @@
       } },
     { id: "tabata", icon: "⏲️", nameKey: "tabataName", descKey: "tabataDesc", build: null }
   ];
+
+  /* Attach an evidence-based form cue to every step:
+     - work cues  -> the move's primary technique cue (shown the whole time)
+     - rest cues  -> rotating safety/technique notes, also spoken when the rest is long enough
+     - 7-Minute   -> each move has its own cue, and rest previews the NEXT move's cue */
+  function attachCues(list, id) {
+    var f = F();
+    var c = cueFor(id);
+    var seven = (id === "7min") ? f.seven : null;
+    var ri = 0;
+    for (var i = 0; i < list.length; i++) {
+      var st = list[i];
+      if (st.isIntro) { st.tip = seven ? seven.brief : c.brief; st.tipTag = "form"; }
+      else if (seven && st.mk) { st.tip = seven.moves[st.mk - 1]; st.tipTag = "form"; }
+      else if (seven && st.nextMk) { st.tip = seven.moves[st.nextMk - 1]; st.tipTag = "note"; }
+      else if (st.cls === "idle" && st.secs >= 4) {
+        st.tip = c.tips[(ri++ % (c.tips.length - 1)) + 1];
+        st.tipTag = "note";
+      } else if (st.cls !== "idle") { st.tip = c.tips[0]; st.tipTag = "form"; }
+    }
+    return list;
+  }
 
   /* ---------- home ---------- */
   var listEl = document.getElementById("list");
@@ -1333,6 +1590,15 @@
     renderList();
     paintVoice();
     renderHistory();
+    if (current) {
+      attachCues(steps, current.id);
+      cueBrief = briefOf(current.id);
+      if (idx >= 0 && steps[idx] && steps[idx].tip) {
+        showCue(steps[idx].tipTag === "note" ? "noteTag" : "formTag", steps[idx].tip);
+      } else if (idx < 0 && cueEl.classList.contains("show")) {
+        showCue("formTag", cueBrief);
+      }
+    }
     if (current && !timer) {
       btn.textContent = T(ended ? "again" : "start");
       stepSubEl.textContent = current.id === "tabata" ? T("setTimer") : T("cuesInfo", { name: T(current.nameKey), n: steps.length });
@@ -1355,11 +1621,39 @@
   var progressEl = document.getElementById("progress");
   var stepSubEl = document.getElementById("stepSub");
   var btn = document.getElementById("btn");
-  var endBtn = document.getElementById("endBtn");
   var skipBtn = document.getElementById("skipBtn");
   var backBtn = document.getElementById("backBtn");
-  function showRunCtrls() { endBtn.classList.remove("hide"); skipBtn.classList.remove("hide"); }
-  function hideRunCtrls() { endBtn.classList.add("hide"); skipBtn.classList.add("hide"); }
+  var moreBtn = document.getElementById("moreBtn");
+  var morePanel = document.getElementById("morePanel");
+  var cueEl = document.getElementById("cue");
+  var cueTagEl = document.getElementById("cueTag");
+  var cueTextEl = document.getElementById("cueText");
+  var cueBrief = "";
+  function showCue(tagKey, text) {
+    cueTagEl.textContent = T(tagKey);
+    cueTextEl.textContent = text;
+    cueEl.classList.add("show");
+  }
+  function hideCue() { cueEl.classList.remove("show"); }
+  /* Before a run: Options opens the collapsed settings panel.
+     During a run: the same top-right button becomes a direct Voice toggle. */
+  function showRunCtrls() {
+    skipBtn.classList.remove("hide");
+    moreMode = "voice";
+    morePanel.classList.remove("show");
+    moreBtn.removeAttribute("data-i18n");
+    moreBtn.textContent = voiceOn ? T("voiceOn") : T("voiceOff");
+  }
+  function hideRunCtrls() {
+    skipBtn.classList.add("hide");
+    moreMode = "panel";
+    moreBtn.setAttribute("data-i18n", "options");
+    moreBtn.textContent = T("options");
+  }
+  moreBtn.addEventListener("click", function () {
+    if (moreMode === "voice") { toggleVoice(); }
+    else { morePanel.classList.toggle("show"); }
+  });
   var levelRow = document.getElementById("levelRow");
   var setupPanel = document.getElementById("setupPanel");
 
@@ -1456,6 +1750,9 @@
       try { speechSynthesis.cancel(); } catch (e) {}
     }
     hideRunCtrls();
+    morePanel.classList.remove("show");
+    hideCue();
+    cueBrief = "";
     ended = false;
     steps = w.build ? w.build() : [];
     idx = -1;
@@ -1479,6 +1776,8 @@
     if (timer) { clearInterval(timer); timer = null; }
     paused = false;
     hideRunCtrls();
+    morePanel.classList.remove("show");
+    hideCue();
     releaseWake();
     stopAudioSession();
     try { speechSynthesis.cancel(); } catch (e) {}
@@ -1498,10 +1797,15 @@
     look(st.cls, st.label);
     updateDemo(st);
     stepSubEl.textContent = (st.cls === "idle" && steps[i + 1]) ? T("next", { x: steps[i + 1].label }) : st.sub;
+    if (st.tip) { showCue(st.tipTag === "note" ? "noteTag" : "formTag", st.tip); }
+    else { hideCue(); }
     countEl.classList.remove("pop");
     void countEl.offsetWidth;
     countEl.classList.add("pop");
-    speak(st.say);
+    var say = st.say;
+    /* rest is long enough -> speak the note without stepping on the countdown */
+    if (st.tip && st.tipTag === "note" && st.secs >= 8) { say = say + cueJoin() + st.tip; }
+    speak(say);
     vibrate(st.cls === "contract" ? 60 : 30);
     remaining = st.secs;
     deadline = Date.now() + st.secs * 1000;
@@ -1558,14 +1862,19 @@
     } else {
       steps = current.build();
     }
+    attachCues(steps, current.id);
     levelRow.classList.add("hide");
     requestWake();
-    speak(T("getReady"));
+    /* opening briefing: one short evidence-based form brief, spoken + on screen.
+       Skip jumps straight to the first work cue, so it never slows down a repeat user. */
+    cueBrief = briefOf(current.id);
+    showCue("formTag", cueBrief);
+    speak(T("getReady") + cueJoin() + cueBrief);
     look("idle", T("ready"));
     countEl.textContent = "";
     demoEl.className = "demo";
-    remaining = 1.4;
-    deadline = Date.now() + 1400;
+    remaining = 8;
+    deadline = Date.now() + 8000;
     timer = setInterval(tick, TICK);
   }
 
@@ -1616,6 +1925,8 @@
     releaseWake();
     stopAudioSession();
     hideRunCtrls();
+    morePanel.classList.remove("show");
+    hideCue();
     try { speechSynthesis.cancel(); } catch (e) {}
     look("idle", T("done"));
     countEl.textContent = "";
@@ -1676,7 +1987,6 @@
     else if (paused) { resumeRun(); }
     else { start(); }
   });
-  endBtn.addEventListener("click", function () { stop(); });
   skipBtn.addEventListener("click", function () { skip(); });
   backBtn.addEventListener("click", function () {
     if (!ended && (timer || paused)) { finish(true); }
