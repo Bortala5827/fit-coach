@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f6f1e7">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <title>Fit Coach — Guided Workouts</title>
 <meta name="description" content="Voice-guided workouts in your browser: Kegel, push-ups, squats, sit-ups, boxing combos and calf raises. No account, no tracking — your data stays on your device.">
 <style>
@@ -132,6 +135,33 @@
   .lvl.on { background: #c9805e; color: #fff; border-color: #c9805e; }
   .level-row.hide { display: none; }
 
+  /* tabata setup */
+  .setup {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    justify-content: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #8a7f70;
+  }
+  .setup.show { display: flex; }
+  .setup input {
+    font-family: inherit;
+    font-size: 14px;
+    width: 64px;
+    padding: 6px 8px;
+    border: 1px solid #e8dfd0;
+    border-radius: 12px;
+    background: #fff;
+    color: #423a31;
+    text-align: center;
+  }
+  .setup input[type="text"] { width: 90px; text-align: left; }
+
+  .install-btn { display: none; margin-top: 16px; }
+  .install-btn.show { display: inline-block; }
+
   /* demo: synced stick figure */
   .demo {
     display: none;
@@ -238,6 +268,7 @@
       <div class="dots" id="dots"></div>
     </div>
     <p class="tip">No account. No tracking. Your data stays on your device.</p>
+    <button id="installBtn" class="btn-ghost install-btn">Install app</button>
   </div>
 
   <!-- SESSION -->
@@ -279,6 +310,12 @@
       <button class="lvl" data-lv="0">Light</button>
       <button class="lvl" data-lv="1">Standard</button>
       <button class="lvl" data-lv="2">Hard</button>
+    </div>
+    <div class="setup" id="setupPanel">
+      <label>Work <input id="cfgWork" type="number" min="5" max="300" value="20">s</label>
+      <label>Rest <input id="cfgRest" type="number" min="3" max="120" value="10">s</label>
+      <label>Rounds <input id="cfgRounds" type="number" min="1" max="50" value="8"></label>
+      <label>Name <input id="cfgName" type="text" maxlength="12" value="Work"></label>
     </div>
   </div>
 </div>
@@ -396,8 +433,7 @@
     { t: "Push + Rotate", s: "Push-ups with rotation" },
     { t: "Side Plank", s: "Side plank, each side" }
   ];
-  function buildSeven() {
-    var steps = [];
+  function buildSeven() {    var steps = [];
     var moves = SEVEN;
     var rounds = 1;
     if (LV === 0) { moves = SEVEN.slice(0, 6); }
@@ -411,6 +447,17 @@
       }
     }
     steps.push(S("Done", "Seven minutes complete. Well earned", 3, "idle", ""));
+    return steps;
+  }
+
+  function buildTabata(cfg) {
+    var steps = [];
+    steps.push(S("Get Set", "Custom intervals. " + cfg.name + ", " + cfg.work + " seconds each round. Ready? Go", 5, "idle", cfg.rounds + " rounds"));
+    for (var r = 1; r <= cfg.rounds; r++) {
+      steps.push(S(cfg.name, cfg.name + ", go", cfg.work, "contract", "Round " + r + "/" + cfg.rounds));
+      if (r < cfg.rounds) { steps.push(S("Rest", "Rest", cfg.rest, "idle", "Next: " + cfg.name)); }
+    }
+    steps.push(S("Done", "Intervals complete. Well earned", 3, "idle", ""));
     return steps;
   }
 
@@ -430,7 +477,8 @@
     { id: "7min", icon: "⚡", name: "7-Minute Workout", desc: "12 moves · full body · science-backed", build: buildSeven },
     { id: "calves", icon: "🦵", name: "Calf Raises", desc: "Calves · 3 × 20 · full range", build: function () {
         return buildReps({ sets: 3, reps: 20, down: "Up", downSay: "Up, hold", downSecs: 2, up: "Lower", upSay: "Lower", upSecs: 1.5 });
-      } }
+      } },
+    { id: "tabata", icon: "⏲️", name: "Tabata Timer", desc: "Custom intervals · you set the clock", build: null }
   ];
 
   /* ---------- home ---------- */
@@ -473,6 +521,18 @@
   var btn = document.getElementById("btn");
   var backBtn = document.getElementById("backBtn");
   var levelRow = document.getElementById("levelRow");
+  var setupPanel = document.getElementById("setupPanel");
+
+  function loadTabataCfg() {
+    try {
+      var cfg = JSON.parse(localStorage.getItem("fitcoach_tabata") || "null");
+      if (!cfg) { return; }
+      document.getElementById("cfgWork").value = cfg.work;
+      document.getElementById("cfgRest").value = cfg.rest;
+      document.getElementById("cfgRounds").value = cfg.rounds;
+      document.getElementById("cfgName").value = cfg.name;
+    } catch (e) {}
+  }
 
   /* level select (Down Dog style: user shapes the workout before it starts) */
   try { LV = parseInt(localStorage.getItem("fitcoach_level"), 10); if (!(LV >= 0 && LV <= 2)) { LV = 1; } } catch (e) { LV = 1; }
@@ -519,7 +579,7 @@
   }
 
   function openWorkout(w) {
-    steps = w.build();
+    steps = w.build ? w.build() : [];
     idx = -1;
     current = w;
     try { history.pushState(null, "", "/" + w.id); } catch (e) {}
@@ -527,9 +587,12 @@
     sessionEl.classList.add("active");
     look("idle", "Ready");
     countEl.textContent = "";
-    stepSubEl.textContent = w.name + " · " + steps.length + " cues";
+    stepSubEl.textContent = w.name + " · " + (w.id === "tabata" ? "set your timer" : steps.length + " cues");
     progressEl.style.width = "0%";
     document.getElementById("quip").classList.remove("show");
+    levelRow.classList.toggle("hide", w.id === "tabata");
+    setupPanel.classList.toggle("show", w.id === "tabata");
+    if (w.id === "tabata") { loadTabataCfg(); }
     btn.textContent = "Start";
   }
 
@@ -571,7 +634,24 @@
 
   function start() {
     btn.textContent = "Stop";
-    steps = current.build();
+    if (current.id === "tabata") {
+      var clamp = function (v, lo, hi, dflt) {
+        v = parseInt(v, 10);
+        if (isNaN(v)) { v = dflt; }
+        return Math.max(lo, Math.min(hi, v));
+      };
+      var cfg = {
+        work: clamp(document.getElementById("cfgWork").value, 5, 300, 20),
+        rest: clamp(document.getElementById("cfgRest").value, 3, 120, 10),
+        rounds: clamp(document.getElementById("cfgRounds").value, 1, 50, 8),
+        name: (document.getElementById("cfgName").value || "").trim().slice(0, 12) || "Work"
+      };
+      try { localStorage.setItem("fitcoach_tabata", JSON.stringify(cfg)); } catch (e) {}
+      steps = buildTabata(cfg);
+      setupPanel.classList.remove("show");
+    } else {
+      steps = current.build();
+    }
     levelRow.classList.add("hide");
     speak("Get ready");
     playStep(0);
@@ -588,7 +668,8 @@
     look("idle", "Ready");
     countEl.textContent = "";
     btn.textContent = "Start";
-    levelRow.classList.remove("hide");
+    if (current && current.id === "tabata") { setupPanel.classList.add("show"); }
+    else { levelRow.classList.remove("hide"); }
   }
 
   var FINISH_LINES = [
@@ -623,7 +704,7 @@
     countEl.textContent = "";
     progressEl.style.width = "100%";
     btn.textContent = "Go again";
-    levelRow.classList.remove("hide");
+    if (current.id !== "tabata") { levelRow.classList.remove("hide"); }
     saveToday();
     var totalSecs = 0;
     for (var i = 0; i < steps.length; i++) { totalSecs += steps[i].secs; }
@@ -695,7 +776,7 @@
 
   renderHistory();
 
-  /* deep link: fit.955827.xyz/kegel etc. */
+  /* deep link: /kegel /boxing /7min ... */
   window.addEventListener("popstate", function () { route(); });
   function route() {
     var seg = location.pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
@@ -705,6 +786,26 @@
     }
   }
   route();
+
+  /* PWA: offline + install */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("/sw.js").catch(function () {});
+    });
+  }
+  var deferredPrompt = null;
+  var installBtn = document.getElementById("installBtn");
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.classList.add("show");
+  });
+  installBtn.addEventListener("click", function () {
+    if (!deferredPrompt) { return; }
+    deferredPrompt.prompt();
+    deferredPrompt = null;
+    installBtn.classList.remove("show");
+  });
 })();
 </script>
 </body>

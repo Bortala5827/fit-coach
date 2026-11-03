@@ -1,0 +1,12 @@
+{
+  "name": "Fit Coach — Guided Workouts",
+  "short_name": "Fit Coach",
+  "description": "Voice-guided workouts in your browser. No account, no tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
+  "icons": [
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
