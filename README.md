@@ -2,11 +2,11 @@
 
 Voice-guided workouts in your browser. Press go, follow the coach — no account, no tracking, nothing leaves your device.
 
-**Live:** https://fit-coach.pages.dev
+**Live:** https://fit.955827.xyz
 
 ## What's inside
 
-8 guided workouts with real-time voice coaching, synced stick-figure demos, haptic cues and a progress ring:
+9 entries — 8 coached workouts plus a custom Tabata timer — with real-time voice coaching, synced stick-figure demos, haptic cues and a progress ring:
 
 | | Workout | Format |
 |---|---|---|
@@ -18,16 +18,18 @@ Voice-guided workouts in your browser. Press go, follow the coach — no account
 | ⏱️ | **Plank** | 30/45/60s hold ladder |
 | ⚡ | **7-Minute Workout** | 12 moves × 30s, science-backed circuit |
 | 🦵 | **Calf Raises** | Full range, 3 × 20 |
+| ⏲️ | **Tabata Timer** | Custom work / rest / rounds |
 
-Every workout has three intensity levels (Light / Standard / Hard). Rest screens always tell you what's next. Finishing a session earns your daily dot and streak.
+Every workout has three intensity levels (Light / Standard / Hard). Rest screens always tell you what's next, and a form cue stays on screen for the whole set. Finishing a session logs its duration, move and cue count.
 
 ## Highlights
 
 - **Audio-first** — built with the Web Speech API, so you can train without watching the screen. Toggle voice off anytime.
 - **Synced demos** — an animated stick figure mirrors every cue, so form is never a guess.
-- **Zero backend** — one HTML file. Works offline once loaded. Progress (streak, 7-day history, level) lives in `localStorage`.
+- **Three tabs** — Train / Technique / Records. Technique is a lookup of evidence-based form cues; Records keeps per-session duration, move, cue count and completion state, with a one-tap clear.
+- **Zero backend** — one HTML file. Works offline once loaded. All progress lives in `localStorage`.
 - **Private by default** — no account, no analytics on your behavior, no data collection.
-- **Deep links** — `fit-coach.pages.dev/kegel`, `/boxing`, `/7min` … each workout is its own landing path.
+- **Deep links** — `/kegel`, `/boxing`, `/7min`, `/tabata`, `/guide`, `/records` … each is its own landing path.
 
 ## Run locally
 
