@@ -202,6 +202,13 @@
 
   .install-btn { display: none; margin-top: 16px; }
   .install-btn.show { display: inline-block; }
+  .today-line { margin-top: 10px; font-size: 12px; font-weight: 600;
+    color: #8aa37b; min-height: 0; }
+
+  /* respect reduced-motion: no confetti/bounce, timers stay functional */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
   .hide { display: none !important; }
 
   /* demo: synced exercise figure — hand-drawn two-pose swap */
@@ -536,6 +543,7 @@
     <button id="langBtn" class="lang-btn">EN</button>
     <h1>Fit Coach</h1>
     <p class="sub" data-i18n="tagline">Voice-guided workouts. Just press go.</p>
+    <p class="today-line" id="todayLine" hidden></p>
     <!-- Daily Mix: science-based random bodyweight circuit, planner + share -->
     <div class="mix-card" id="mixCard">
       <button class="mix-head" id="mixHead">
@@ -932,7 +940,7 @@
         <div class="rc-cut"></div>
         <div class="rc-total"><span data-i18n="rcTotal">Total</span><b id="rcSum"></b></div>
         <div class="rc-qr">
-          <img id="rcQr" alt="Plan QR code">
+          <img id="rcQr" alt="Plan QR code" onerror="this.style.display='none'" onload="this.style.display=''">
           <div class="rc-code" id="rcCode"></div>
         </div>
         <div class="rc-foot" data-i18n="rcScan">Scan to load this circuit</div>
@@ -1076,13 +1084,16 @@
       mixBrief: "Alternate lower body, upper body and core. Keep a steady pace, keep breathing, stop if you feel pain.",
       recExport: "Export", recExportEmpty: "Nothing to export yet", recExportDone: "Saved",
       rcPlan: "Today's plan", rcEdit: "Edit", rcTotal: "Total",
-      rcMeta: "{m} min · {lv} · {n} moves", rcSum: "{n} moves · {t}",
+      rcMeta: "{date} · {m} min · {lv} · {n} moves", rcSum: "{n} moves · {t}",
       rcScan: "Scan to load this circuit",
-      aboutVer: "Voice-guided workouts · v1.9",
+      aboutVer: "Voice-guided workouts · v1.10",
       privacy1: "No account. No tracking.",
       privacy2: "Your data stays on your device.",
       disclaimer: "General fitness guidance only. Not medical advice. Stop if you feel pain.",
       install: "Install app",
+      installIos: "iOS: Share → Add to Home Screen",
+      todayDone: "✓ {m} trained today{d}",
+      todayStreak: " · {d}-day streak",
       oss: "Open source on GitHub",
       repSub: "Rep {r}/{rn} · Set {s}/{sn}",
       setSub: "Set {s}/{n}",
@@ -1182,13 +1193,16 @@
       mixBrief: "下半身、上半身、核心交替進行；節奏穩定、不要憋氣，感到疼痛就停止。",
       recExport: "匯出", recExportEmpty: "還沒有記錄可匯出", recExportDone: "已儲存",
       rcPlan: "今日菜單", rcEdit: "調整", rcTotal: "合計",
-      rcMeta: "{m} 分鐘 · {lv} · {n} 項", rcSum: "{n} 項 · {t}",
+      rcMeta: "{date} · {m} 分鐘 · {lv} · {n} 項", rcSum: "{n} 項 · {t}",
       rcScan: "掃碼載入這套編排",
-      aboutVer: "語音帶練運動 · v1.9",
+      aboutVer: "語音帶練運動 · v1.10",
       privacy1: "不用註冊、不追蹤。",
       privacy2: "資料只留在你的裝置上。",
       disclaimer: "僅供一般健身參考，非醫療建議。感到不適請立即停止。",
       install: "安裝 App",
+      installIos: "iOS：分享 → 加入主畫面",
+      todayDone: "✓ 今天已練 {m}{d}",
+      todayStreak: " · 連續 {d} 天",
       oss: "GitHub 開放原始碼",
       repSub: "第 {r}/{rn} 下 · 第 {s}/{sn} 組",
       setSub: "第 {s}/{n} 組",
@@ -1976,7 +1990,9 @@
   }
   function renderReceipt() {
     var seq = ensureMixSeq(), n = seq.length;
+    var now = new Date();
     rcMeta.textContent = T("rcMeta", {
+      date: (now.getMonth() + 1) + "/" + now.getDate(),
       m: Math.max(1, Math.round(mixTotalSecs() / 60)),
       lv: T("level" + mixCfg.l), n: n
     });
@@ -2472,6 +2488,7 @@
   var QUIPS = ["q1", "q2", "q3", "q4", "q5"];
 
   function confetti() {
+    if (REDUCED) { return; }
     var colors = ["#c9805e", "#8aa37b", "#e0b15e", "#b58ec9", "#6ea8c9"];
     var ring = document.querySelector(".ring-wrap");
     for (var i = 0; i < 26; i++) {
@@ -2511,13 +2528,18 @@
     btn.textContent = T("again");
     if (current.id !== "tabata" && current.id !== "mix") { levelRow.classList.remove("hide"); }
     else if (current.id === "tabata") { setupPanel.classList.add("show"); }
-    saveToday(current.id, {
-      secs: elapsedSecs(),
-      cues: doneN,
-      total: steps.length,
-      full: !early,
-      name: current.id === "tabata" ? tabataName : ""
-    });
+    /* filter junk sessions: opening a workout and backing out within seconds
+       must not inflate streak, days-trained or the log */
+    var ranSecs = elapsedSecs();
+    if (ranSecs >= 20 || doneN >= 2) {
+      saveToday(current.id, {
+        secs: ranSecs,
+        cues: doneN,
+        total: steps.length,
+        full: !early,
+        name: current.id === "tabata" ? tabataName : ""
+      });
+    }
     runStartAt = 0;
     var hist = calcHistory();
     renderHistory();
@@ -2655,6 +2677,21 @@
     var sesEls = document.querySelectorAll(".js-sessions");
     var sesN = sessionCount();
     for (var c = 0; c < sesEls.length; c++) { sesEls[c].textContent = String(sesN); }
+    /* mobile home: one quiet line of "you already trained today" — hidden until true */
+    var todayLine = document.getElementById("todayLine");
+    var todayKey = dateKey(new Date());
+    var todaySecs = 0;
+    var all = loadSessions();
+    for (var a = 0; a < all.length; a++) {
+      if (all[a].d === todayKey && typeof all[a].secs === "number" && all[a].secs > 0) { todaySecs += all[a].secs; }
+    }
+    if (todaySecs >= 60) {
+      todayLine.textContent = T("todayDone", {
+        m: fmtTotal(todaySecs),
+        d: h.streak > 1 ? T("todayStreak", { d: h.streak }) : ""
+      });
+      todayLine.hidden = false;
+    } else { todayLine.hidden = true; }
     var dotsAll = document.querySelectorAll(".js-dots");
     for (var s = 0; s < dotsAll.length; s++) {
       var dots = dotsAll[s];
@@ -2860,11 +2897,30 @@
   }
   var deferredPrompt = null;
   var installBtns = document.querySelectorAll(".js-install");
+  var REDUCED = false;
+  try { REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();
     deferredPrompt = e;
     for (var i = 0; i < installBtns.length; i++) { installBtns[i].classList.add("show"); }
   });
+  /* iOS Safari never fires beforeinstallprompt — swap the dead button for the
+     real gesture instead of leaving a tap that does nothing */
+  (function () {
+    var standalone = window.navigator.standalone === true ||
+      window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    var ios = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (ios && !standalone) {
+      setTimeout(function () {
+        for (var i = 0; i < installBtns.length; i++) {
+          installBtns[i].classList.add("show");
+          installBtns[i].setAttribute("data-i18n", "installIos");
+        }
+        applyI18n();
+      }, 600);
+    }
+  })();
   (function () {
     var each = window.NodeList && NodeList.prototype.forEach ? function (f) { installBtns.forEach(f); } : function (f) { for (var i = 0; i < installBtns.length; i++) { f(installBtns[i]); } };
     each(function (b) {

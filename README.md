@@ -30,6 +30,9 @@ Every workout has three intensity levels (Light / Standard / Hard). Rest screens
 - **Mid-set coaching** — long holds are not silent: a short form reminder and a pace nudge land at roughly 35% and 80% of every 20s+ interval, so the voice reacts while you work instead of only announcing the move.
 - **Plan receipt with QR** — the circuit is printed on Records as a paper-style receipt (dashed cut lines, torn edge, `Ctrl+P` prints just the slip). The whole plan is encoded into a short `?mix=` code, so the QR carries the circuit itself with no backend and no plan database. Scan or paste the link to load the exact same circuit on another device — same `api.qrserver.com` generator as `rcj-card`.
 - **Three tabs** — Train / Technique / Records. Technique is a lookup of evidence-based form cues; Records keeps per-session duration, move, cue count and completion state, plus the plan receipt, a one-tap clear and a CSV export.
+- **Honest stats** — sessions shorter than ~20 s (open the app, tap Start, back out) are never logged, so streaks and day counts only move when you actually train.
+- **Install anywhere** — Android/desktop get a real install prompt; iOS Safari shows the Share → Add to Home Screen gesture instead of a dead button.
+- **Accessible** — respects `prefers-reduced-motion` (no confetti or bounce), localized aria labels on the tab bar.
 - **English / 繁體中文** — the coach speaks both, preferring natural system voices (Samantha-class for English, Taiwan Mandarin for Chinese), with a 🎵 shortcut to the voice studio.
 - **Zero backend** — one HTML file. Works offline once loaded. All progress lives in `localStorage`.
 - **Private by default** — no account, no analytics on your behavior, no data collection.
